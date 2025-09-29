@@ -1,10 +1,25 @@
 # example values
+spring:
+  jpa:
+    database: mysql
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+      dialect: org.hibernate.dialect.MySQL8Dialect
+    liquibase:
+      changelog: classpath:db/changelog/db.changelog-master.yaml
+      enabled: true
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
+    username: daniilkharchev
+    password: 12345678
 
 indexing-settings:
   sites:
-    - url: https://www.lenta.ru
-      name: Лента.ру
-    - url: https://www.skillbox.ru
-      name: Skillbox
-    - url: https://www.playback.ru
-      name: PlayBack.Ru
+    - url: https://www.svetlovka.ru/
+      name: Центральная городская молодежная библиотека им. М. А. Светлова
+    - url: https://radiomv.ru/
+      name: Милицейская волна
+    - url: https://et-cetera.ru/mobile/
+      name: Театр «Et Cetera»

@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/changeset/create-site-table.sql
+  - include:
+      file: db/changelog/changeset/create-page-table.sql
+  - include:
+      file: db/changelog/changeset/create-idx-path-in-page-table.sql
+  - include:
+      file: db/changelog/changeset/create-lemma-table.sql
+  - include:
+      file: db/changelog/changeset/create-index-table.sql
