@@ -1,19 +1,19 @@
-package model;
+package searchengine.model;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
-@Table(name = "index")
+@Table(name = "`index`")
 @Getter
 @Setter
 public class Index {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private int id;
+    private Integer id;
 
     @ManyToOne
     @JoinColumn(name = "page_id")
@@ -24,5 +24,5 @@ public class Index {
     private Lemma lemma;
 
     @Column(name = "rank")
-    private float rank;
+    private Float rank;
 }

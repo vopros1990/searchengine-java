@@ -1,4 +1,4 @@
-package model;
+package searchengine.model;
 
 public enum IndexingStatus {
     INDEXED,

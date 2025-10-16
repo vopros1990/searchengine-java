@@ -2,7 +2,7 @@
 spring:
   jpa:
     database: mysql
-    show-sql: true
+    show-sql: false
     hibernate:
       ddl-auto: validate
       dialect: org.hibernate.dialect.MySQL8Dialect
@@ -21,5 +21,47 @@ indexing-settings:
       name: Центральная городская молодежная библиотека им. М. А. Светлова
     - url: https://radiomv.ru/
       name: Милицейская волна
-    - url: https://et-cetera.ru/mobile/
-      name: Театр «Et Cetera»
+#    - url: https://et-cetera.ru/mobile/
+#      name: Театр «Et Cetera»
+    - url: https://dombulgakova.ru/
+      name: Булгаковский дом
+
+crawler-settings:
+  headers-rotation-interval-seconds: 300
+  connection-timeout-millis-min: 300
+  connection-timeout-millis-max: 2500
+  page-load-time-limit-millis: 15000
+  storage-batch-limit: 2000
+  reconnect-attempts-max: 10
+  reconnect-attempt-timeout-millis: 5000
+  headers:
+    - user-agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 YaBrowser/25.8.0.0 Safari/537.36"
+      referrer: "http://www.google.com"
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,/;q=0.8"
+      accept-language: "ru-RU,ru;q=0.9"
+      accept-encoding: "gzip, deflate, br"
+      upgrade-insecure-requests: "1"
+
+    - user-agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:116.0) Gecko/20100101 Firefox/116.0"
+      referrer: "http://www.bing.com"
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,/;q=0.8"
+      accept-language: "ru-RU,ru;q=0.9"
+      accept-encoding: "gzip, deflate, br"
+      upgrade-insecure-requests: "1"
+
+    - user-agent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+      referrer: "https://duckduckgo.com"
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,/;q=0.8"
+      accept-language: "ru-RU,ru;q=0.9"
+      accept-encoding: "gzip, deflate, br"
+      upgrade-insecure-requests: "1"
+
+    - user-agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0"
+      referrer: "https://yandex.ru"
+      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,/;q=0.8"
+      accept-language: "ru-RU,ru;q=0.9"
+      accept-encoding: "gzip, deflate, br"
+      upgrade-insecure-requests: "1"
+
+task-executor:
+  shutdown-await-termination-seconds: 15

@@ -1,9 +1,9 @@
-package model;
+package searchengine.model;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.List;
 
 @Entity
@@ -14,7 +14,7 @@ public class Lemma {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private int id;
+    private Integer id;
 
     @ManyToOne
     @JoinColumn(name = "site_id")
@@ -24,8 +24,8 @@ public class Lemma {
     private String lemma;
 
     @Column(name = "frequency")
-    private int frequency;
+    private Integer frequency;
 
-    @OneToMany(mappedBy = "index", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "lemma", cascade = CascadeType.ALL)
     private List<Index> indexList;
 }

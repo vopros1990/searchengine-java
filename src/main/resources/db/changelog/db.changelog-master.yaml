@@ -9,3 +9,5 @@ databaseChangeLog:
       file: db/changelog/changeset/create-lemma-table.sql
   - include:
       file: db/changelog/changeset/create-index-table.sql
+  - include:
+      file: db/changelog/changeset/add-unique-constraint-in-page-table.sql

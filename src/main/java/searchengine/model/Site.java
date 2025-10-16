@@ -1,9 +1,9 @@
-package model;
+package searchengine.model;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,8 +15,9 @@ public class Site {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private int id;
+    private Integer id;
 
+    @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "enum('INDEXING', 'INDEXED', 'FAIL')", name = "status")
     private IndexingStatus status;
 
@@ -32,9 +33,9 @@ public class Site {
     @Column(name="name", columnDefinition = "VARCHAR(255)")
     private String name;
 
-    @OneToMany(mappedBy = "page", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "site", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Page> pageList;
 
-    @OneToMany(mappedBy = "lemma", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "site", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Lemma> lemmaList;
 }
