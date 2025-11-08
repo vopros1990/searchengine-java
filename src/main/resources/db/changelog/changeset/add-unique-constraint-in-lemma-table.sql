@@ -1,0 +1,1 @@
+ALTER TABLE lemma ADD UNIQUE (lemma, site_id);

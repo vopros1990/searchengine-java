@@ -11,11 +11,14 @@ import searchengine.model.IndexingStatus;
 import searchengine.model.Site;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface SiteRepository extends JpaRepository<Site, Integer> {
     List<Site> findByStatus(IndexingStatus status);
+
+    boolean existsByStatus(IndexingStatus status);
+
+    Site findByUrlContaining(String url);
 
     @Modifying
     @Transactional
@@ -26,4 +29,18 @@ public interface SiteRepository extends JpaRepository<Site, Integer> {
     @Transactional
     @Query(value = "UPDATE site SET status_time = now(), last_error = :lastError WHERE id = :siteId;", nativeQuery = true)
     void updateLastErrorAndStatusTime(@Param("siteId") int id, @Param("lastError") String lastError);
+
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE site SET status_time = now(), status = :status WHERE id = :siteId;", nativeQuery = true)
+    void updateStatusAndStatusTime(@Param("siteId") int id, @Param("status") String status);
+
+    @Modifying
+    @Transactional
+    @Query(value = "UPDATE site SET status_time = now(), last_error = :lastError, status = :status WHERE id = :siteId;", nativeQuery = true)
+    void updateLastErrorAndStatusAndStatusTime(@Param("siteId") int id, @Param("lastError") String lastError, @Param("status") String status);
+
+    @Modifying
+    @Query(value = "delete from site where id=?;", nativeQuery = true)
+    void deleteBySiteId(int id);
 }

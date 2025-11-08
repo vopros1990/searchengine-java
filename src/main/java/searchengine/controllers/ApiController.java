@@ -2,15 +2,13 @@ package searchengine.controllers;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import searchengine.dto.search.SearchRequestDto;
 import searchengine.dto.statistics.ApiResponse;
 import searchengine.dto.statistics.StatisticsResponse;
-import searchengine.exceptions.IndexingStartException;
-import searchengine.services.CrawlerService;
-import searchengine.services.IndexingService;
-import searchengine.services.StatisticsService;
+import searchengine.exceptions.IndexingException;
+import searchengine.services.indexing.service.IndexingService;
+import searchengine.services.statistics.StatisticsService;
 
 @RestController
 @RequestMapping("/api")
@@ -33,7 +31,7 @@ public class ApiController {
     public ResponseEntity<ApiResponse> startIndexing() {
         try {
             indexingService.startIndexing();
-        } catch (IndexingStartException e) {
+        } catch (IndexingException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(
                             ApiResponse.error(e.getMessage())
@@ -47,12 +45,33 @@ public class ApiController {
     public ResponseEntity<ApiResponse> stopIndexing() {
         try {
             indexingService.stopIndexing();
-        } catch (IndexingStartException e) {
+        } catch (IndexingException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(
                             ApiResponse.error(e.getMessage())
                     );
         }
+
+        return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    @PostMapping("/indexPage")
+    public ResponseEntity<ApiResponse> indexPage(@RequestParam(name = "url") String url) {
+        try {
+            indexingService.indexPage(url);
+        } catch (IndexingException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(
+                            ApiResponse.error(e.getMessage())
+                    );
+        }
+
+        return ResponseEntity.ok(ApiResponse.ok());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse> search(SearchRequestDto requestDto) {
+
 
         return ResponseEntity.ok(ApiResponse.ok());
     }

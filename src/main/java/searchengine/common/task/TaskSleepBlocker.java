@@ -1,4 +1,4 @@
-package searchengine.utils;
+package searchengine.common.task;
 
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinPool.ManagedBlocker;

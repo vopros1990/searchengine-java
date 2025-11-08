@@ -19,10 +19,11 @@ public class Index {
     @JoinColumn(name = "page_id")
     private Page page;
 
-    @ManyToOne
+//    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "lemma_id")
     private Lemma lemma;
 
-    @Column(name = "rank")
+    @Column(name = "`rank`")
     private Float rank;
 }

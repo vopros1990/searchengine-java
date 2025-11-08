@@ -1,4 +1,4 @@
-package searchengine.utils;
+package searchengine.common.text;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,20 +30,30 @@ public class URLUtils {
         return url;
     }
 
+    public static String toRelativePath(String url) {
+        String baseUrl = extractBaseUrl(url);
+        return toRelativePath(url, baseUrl);
+    }
+
     public static String stripUrl(String url) {
         return url.replaceAll("https?://", "");
     }
 
-    public static boolean isValidLink(String url, String baseUrl) {
-        return !(isInvalidLink(url) || isExternalLink(url, baseUrl) || isRootPath(url));
+    public static boolean isCrawlableUrl(String url, String baseUrl) {
+        return !(isNonHttpLink(url) || isExternalLink(url, baseUrl) || isRootPath(url) || !isWebPageUrl(url));
     }
 
     public static boolean isExternalLink(String url, String baseUrl) {
         return !isAbsoluteLink(url, baseUrl) && !isPath(url);
     }
 
-    public static boolean isInvalidLink(String url) {
-        String regex = "^mailto.*|.*#.*";
+    public static boolean isNonHttpLink(String url) {
+        String regex = "^mailto.*|.*#.*|^javascript:.*";
+        return url.matches(regex);
+    }
+
+    public static boolean isWebPageUrl(String url) {
+        String regex = "^.+/[^.]+$|/$|[^.]*\\.html?$|[^.]*\\.php$";
         return url.matches(regex);
     }
 

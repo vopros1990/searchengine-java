@@ -6,6 +6,7 @@ import lombok.Setter;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "site")
@@ -18,7 +19,7 @@ public class Site {
     private Integer id;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "enum('INDEXING', 'INDEXED', 'FAIL')", name = "status")
+    @Column(columnDefinition = "enum('INDEXING', 'INDEXED', 'FAILED')", name = "status")
     private IndexingStatus status;
 
     @Column(name="status_time")
@@ -33,9 +34,22 @@ public class Site {
     @Column(name="name", columnDefinition = "VARCHAR(255)")
     private String name;
 
-    @OneToMany(mappedBy = "site", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "site", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<Page> pageList;
 
-    @OneToMany(mappedBy = "site", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "site", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<Lemma> lemmaList;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Site site = (Site) o;
+        return Objects.equals(getId(), site.getId()) && Objects.equals(getUrl(), site.getUrl());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId(), getUrl());
+    }
 }

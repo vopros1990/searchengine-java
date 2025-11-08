@@ -1,13 +1,18 @@
 package searchengine.dto.statistics;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+
+import java.util.List;
 
 @Getter
 @Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse {
     private boolean result = true;
+    private int count;
+    private List<?> data;
 
     public static ApiResponse ok() {
         return new ApiResponse();

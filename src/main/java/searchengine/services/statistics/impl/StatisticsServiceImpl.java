@@ -1,0 +1,86 @@
+package searchengine.services.statistics.impl;
+
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import searchengine.config.SiteConfig;
+import searchengine.config.SitesList;
+import searchengine.dto.statistics.DetailedStatisticsItem;
+import searchengine.dto.statistics.StatisticsData;
+import searchengine.dto.statistics.StatisticsResponse;
+import searchengine.dto.statistics.TotalStatistics;
+import searchengine.model.IndexingStatus;
+import searchengine.model.Site;
+import searchengine.repositories.LemmaRepository;
+import searchengine.repositories.PageRepository;
+import searchengine.repositories.SiteRepository;
+import searchengine.services.statistics.StatisticsService;
+
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+@Service
+@RequiredArgsConstructor
+public class StatisticsServiceImpl implements StatisticsService {
+    @NonNull
+    private List<Site> indexingSites;
+
+    private final SiteRepository siteRepository;
+    private final PageRepository pageRepository;
+    private final LemmaRepository lemmaRepository;
+
+    @Override
+    public StatisticsResponse getStatistics() {
+        TotalStatistics total = new TotalStatistics();
+        total.setSites(indexingSites.size());
+        total.setIndexing(false);
+
+        List<DetailedStatisticsItem> detailed = new ArrayList<>();
+
+        indexingSites.forEach(site -> {
+            Site indexingSite = siteRepository.findByUrlContaining(site.getUrl());
+            if (indexingSite == null)
+                indexingSite = site;
+
+            DetailedStatisticsItem item = new DetailedStatisticsItem();
+
+            item.setName(indexingSite.getName());
+            item.setUrl(indexingSite.getUrl());
+
+            Integer siteId = indexingSite.getId();
+            int pages = 0;
+            int lemmas = 0;
+            String lastError = "";
+
+            if (siteId != null) {
+                pages = pageRepository.countSitePages(siteId);
+                lemmas = lemmaRepository.countSiteLemmas(siteId);
+                lastError = indexingSite.getLastError() == null ? "" : indexingSite.getLastError();
+            } else {
+                indexingSite.setStatus(IndexingStatus.FAILED);
+                indexingSite.setLastError("Индексация сайта не запущена");
+                indexingSite.setStatusTime(LocalDateTime.now());
+            }
+
+            item.setPages(pages);
+            item.setLemmas(lemmas);
+            item.setStatus(indexingSite.getStatus().toString());
+            item.setError(lastError);
+            item.setStatusTime(indexingSite.getStatusTime().toEpochSecond(ZoneOffset.UTC));
+            total.setPages(total.getPages() + pages);
+            total.setLemmas(total.getLemmas() + lemmas);
+            detailed.add(item);
+        });
+
+        StatisticsResponse response = new StatisticsResponse();
+        StatisticsData data = new StatisticsData();
+        data.setTotal(total);
+        data.setDetailed(detailed);
+        response.setStatistics(data);
+        response.setResult(true);
+        return response;
+    }
+}

@@ -18,29 +18,25 @@ public class CrawlerSettings {
     private List<Map<String, String>> headers;
 
     @Setter
-    private long headersRotationIntervalSeconds;
+    private long headersRotationIntervalSeconds = 300;
 
     @Setter
-    private int connectionTimeoutMillisMin;
+    private int connectionTimeoutMillisMin = 300;
 
     @Setter
-    private int connectionTimeoutMillisMax;
-
-    @Setter
-    @Getter
-    private int pageLoadTimeLimitMillis;
+    private int connectionTimeoutMillisMax = 2500;
 
     @Setter
     @Getter
-    private int storageBatchLimit;
+    private int pageLoadTimeLimitMillis = 15000;
 
     @Setter
     @Getter
-    private int reconnectAttemptsMax;
+    private int reconnectAttemptsMax = 10;
 
     @Setter
     @Getter
-    private int reconnectAttemptTimeoutMillis;
+    private int reconnectAttemptTimeoutMillis = 5000;
 
     private Instant headerRotationStartTime = Instant.now();
     private Iterator<Map<String, String>> iterator;

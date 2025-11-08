@@ -11,3 +11,9 @@ databaseChangeLog:
       file: db/changelog/changeset/create-index-table.sql
   - include:
       file: db/changelog/changeset/add-unique-constraint-in-page-table.sql
+  - include:
+      file: db/changelog/changeset/create-idx-url-in-site-table.sql
+  - include:
+      file: db/changelog/changeset/add-unique-constraint-in-site-table.sql
+  - include:
+      file: db/changelog/changeset/add-unique-constraint-in-lemma-table.sql

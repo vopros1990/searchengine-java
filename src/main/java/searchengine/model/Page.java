@@ -3,7 +3,10 @@ package searchengine.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(
@@ -15,7 +18,7 @@ import java.util.List;
 )
 @Getter
 @Setter
-public class Page {
+public class Page implements Comparable<Page> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -24,9 +27,6 @@ public class Page {
     @Column(name="path", columnDefinition = "TEXT")
     private String path;
 
-    @Column(name="site_id")
-    private Integer siteId;
-
     @Column(name="code")
     private Integer code;
 
@@ -34,13 +34,37 @@ public class Page {
     private String content;
 
     @ManyToOne
-    @JoinColumn(name = "site_id", insertable = false, updatable = false)
+    @JoinColumn(name = "site_id")
     private Site site;
 
     @OneToMany(mappedBy = "page", cascade = CascadeType.ALL)
-    private List<Index> indexList;
+    private List<Index> indexList = new ArrayList<>();
 
     public boolean isEmpty() {
-        return path == null && siteId == null && code == null && content == null && site == null && indexList == null;
+        return path == null && code == null && content == null && site == null && indexList == null;
+    }
+
+    public void addIndex(Index index) {
+        index.setPage(this);
+        this.indexList.add(index);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Page page = (Page) o;
+        return Objects.equals(getPath(), page.getPath()) && Objects.equals(site.getId(), page.site.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getPath(), site.getId());
+    }
+
+    @Override
+    public int compareTo(Page p) {
+        return (p.getPath() + p.site.getId())
+                .compareTo(this.getPath() + this.site.getId());
     }
 }
