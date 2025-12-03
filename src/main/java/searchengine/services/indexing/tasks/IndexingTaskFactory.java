@@ -6,7 +6,7 @@ import searchengine.model.Site;
 import searchengine.repositories.PageRepository;
 import searchengine.repositories.SiteRepository;
 import searchengine.services.indexing.crawler.PageFetcher;
-import searchengine.services.lemma.impl.LemmaExtractor;
+import searchengine.services.indexing.service.impl.LemmaExtractorServiceImpl;
 
 @Component
 @RequiredArgsConstructor
@@ -14,7 +14,7 @@ public class IndexingTaskFactory {
     private final SiteRepository siteRepository;
     private final PageRepository pageRepository;
     private final PageFetcher pageFetcher;
-    private final LemmaExtractor lemmaExtractor;
+    private final LemmaExtractorServiceImpl lemmaExtractor;
 
     public SiteIndexingTask buildSiteIndexingTask(Site site) {
         return new SiteIndexingTask(site, siteRepository, pageRepository, pageFetcher, lemmaExtractor);

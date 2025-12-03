@@ -1,0 +1,1 @@
+CREATE INDEX idx_word ON lemma_cache(word);

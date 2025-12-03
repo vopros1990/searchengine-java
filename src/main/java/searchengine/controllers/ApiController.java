@@ -1,26 +1,29 @@
 package searchengine.controllers;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import searchengine.dto.search.SearchRequestDto;
+import searchengine.dto.search.SearchResultDto;
 import searchengine.dto.statistics.ApiResponse;
 import searchengine.dto.statistics.StatisticsResponse;
 import searchengine.exceptions.IndexingException;
+import searchengine.exceptions.SearchingServiceException;
 import searchengine.services.indexing.service.IndexingService;
+import searchengine.services.searching.SearchingService;
 import searchengine.services.statistics.StatisticsService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@RequiredArgsConstructor
 public class ApiController {
 
     private final StatisticsService statisticsService;
     private final IndexingService indexingService;
-
-    public ApiController(StatisticsService statisticsService, IndexingService indexingService) {
-        this.statisticsService = statisticsService;
-        this.indexingService = indexingService;
-    }
+    private final SearchingService searchingService;
 
     @GetMapping("/statistics")
     public ResponseEntity<StatisticsResponse> statistics() {
@@ -71,8 +74,19 @@ public class ApiController {
 
     @GetMapping("/search")
     public ResponseEntity<ApiResponse> search(SearchRequestDto requestDto) {
+        try {
+            ApiResponse response = ApiResponse.ok();
+            List<SearchResultDto> searchResults = searchingService.search(requestDto);
+            response.setData(searchResults);
+            response.setCount(searchResults.size());
 
-
-        return ResponseEntity.ok(ApiResponse.ok());
+            return ResponseEntity.ok(response);
+        } catch (SearchingServiceException e) {
+            return ResponseEntity.status(
+                    e.getStatusCode() == null ? HttpStatus.CONFLICT : HttpStatus.valueOf(e.getStatusCode())
+            ).body(
+                    ApiResponse.error(e.getMessage())
+            );
+        }
     }
 }

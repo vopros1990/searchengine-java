@@ -3,8 +3,6 @@ package searchengine.services.statistics.impl;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import searchengine.config.SiteConfig;
-import searchengine.config.SitesList;
 import searchengine.dto.statistics.DetailedStatisticsItem;
 import searchengine.dto.statistics.StatisticsData;
 import searchengine.dto.statistics.StatisticsResponse;
@@ -20,7 +18,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +33,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     public StatisticsResponse getStatistics() {
         TotalStatistics total = new TotalStatistics();
         total.setSites(indexingSites.size());
+        total.setLemmas(lemmaRepository.countUniqueLemmas());
         total.setIndexing(false);
 
         List<DetailedStatisticsItem> detailed = new ArrayList<>();
@@ -61,8 +59,8 @@ public class StatisticsServiceImpl implements StatisticsService {
                 lastError = indexingSite.getLastError() == null ? "" : indexingSite.getLastError();
             } else {
                 indexingSite.setStatus(IndexingStatus.FAILED);
-                indexingSite.setLastError("Индексация сайта не запущена");
                 indexingSite.setStatusTime(LocalDateTime.now());
+                lastError = "Индексация сайта не запущена";
             }
 
             item.setPages(pages);
@@ -71,7 +69,6 @@ public class StatisticsServiceImpl implements StatisticsService {
             item.setError(lastError);
             item.setStatusTime(indexingSite.getStatusTime().toEpochSecond(ZoneOffset.UTC));
             total.setPages(total.getPages() + pages);
-            total.setLemmas(total.getLemmas() + lemmas);
             detailed.add(item);
         });
 

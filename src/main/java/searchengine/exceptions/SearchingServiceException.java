@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public class SearchingServiceException extends RuntimeException {
-    private int statusCode;
+    private Integer statusCode;
 
     public SearchingServiceException(String message) {
         super(message);

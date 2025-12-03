@@ -9,7 +9,11 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
-@Table(name = "site")
+@Table(name = "site",
+        uniqueConstraints = @UniqueConstraint(
+        columnNames = {
+                "url"
+        }))
 @Getter
 @Setter
 public class Site {

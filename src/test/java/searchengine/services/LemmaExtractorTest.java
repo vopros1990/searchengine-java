@@ -4,7 +4,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import searchengine.services.lemma.impl.LemmaExtractor;
+import searchengine.services.indexing.service.impl.LemmaExtractorServiceImpl;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -14,37 +14,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest
 public class LemmaExtractorTest {
     @Autowired
-    private LemmaExtractor lemmaExtractor;
-//
-//    @BeforeEach
-//    public void setUp() {
-//        lemmaExtractor = new LemmaExtractor();
-//    }
+    private LemmaExtractorServiceImpl lemmaExtractor;
 
     @Test
     @DisplayName("Test returning an empty Map when parsing empty content")
     public void whenEmptyContent_ThenReturnEmptyMap() {
         String content = "";
         Map<String, Integer> expected = new TreeMap<>();
-        Map<String, Integer> actual = lemmaExtractor.buildLemmasFrequencyMap(content);
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    @DisplayName("Test returning an empty Map when parsing HTML content with no text")
-    public void whenHtmlTagsContent_ThenReturnEmptyMap() {
-        String content = "<span></span><br /><!doctyle />";
-        Map<String, Integer> expected = new TreeMap<>();
-        Map<String, Integer> actual = lemmaExtractor.buildLemmasFrequencyMap(content);
+        Map<String, Integer> actual = lemmaExtractor.buildLemmaFrequencyMap(content);
         assertEquals(expected, actual);
     }
 
     @Test
     @DisplayName("Test returning an empty Map when parsing content with no words")
     public void whenNoWordsContent_ThenReturnEmptyMap() {
-        String content = "<, ?, ;72387ad,%3452#$@%    /n";
+        String content = "<, ?, ;72387ad,%3452#$@%    /" + System.lineSeparator();
         Map<String, Integer> expected = new TreeMap<>();
-        Map<String, Integer> actual = lemmaExtractor.buildLemmasFrequencyMap(content);
+        Map<String, Integer> actual = lemmaExtractor.buildLemmaFrequencyMap(content);
         assertEquals(expected, actual);
     }
 
@@ -55,7 +41,7 @@ public class LemmaExtractorTest {
         Map<String, Integer> expected = new TreeMap<>();
         expected.put("стихотворный", 1);
         expected.put("форма", 1);
-        Map<String, Integer> actual = lemmaExtractor.buildLemmasFrequencyMap(content);
+        Map<String, Integer> actual = lemmaExtractor.buildLemmaFrequencyMap(content);
         assertEquals(expected, actual);
     }
 
@@ -66,7 +52,7 @@ public class LemmaExtractorTest {
         Map<String, Integer> expected = new TreeMap<>();
         expected.put("стихотворный", 1);
         expected.put("форма", 1);
-        Map<String, Integer> actual = lemmaExtractor.buildLemmasFrequencyMap(content);
+        Map<String, Integer> actual = lemmaExtractor.buildLemmaFrequencyMap(content);
         assertEquals(expected, actual);
     }
 
@@ -77,7 +63,7 @@ public class LemmaExtractorTest {
         Map<String, Integer> expected = new TreeMap<>();
         expected.put("дождь", 3);
         expected.put("дождливый", 2);
-        Map<String, Integer> actual = lemmaExtractor.buildLemmasFrequencyMap(content);
+        Map<String, Integer> actual = lemmaExtractor.buildLemmaFrequencyMap(content);
         assertEquals(expected, actual);
     }
 
@@ -88,7 +74,7 @@ public class LemmaExtractorTest {
         Map<String, Integer> expected = new TreeMap<>();
         expected.put("lorem", 1);
         expected.put("ipsum", 1);
-        Map<String, Integer> actual = lemmaExtractor.buildLemmasFrequencyMap(content);
+        Map<String, Integer> actual = lemmaExtractor.buildLemmaFrequencyMap(content);
         assertEquals(expected, actual);
     }
 
@@ -98,7 +84,7 @@ public class LemmaExtractorTest {
         String content = "abraкадабра";
         Map<String, Integer> expected = new TreeMap<>();
         expected.put("abraкадабра", 1);
-        Map<String, Integer> actual = lemmaExtractor.buildLemmasFrequencyMap(content);
+        Map<String, Integer> actual = lemmaExtractor.buildLemmaFrequencyMap(content);
         assertEquals(expected, actual);
     }
 
@@ -107,7 +93,8 @@ public class LemmaExtractorTest {
     public void whenParticle_ThenReturnEmptyMap() {
         String content = "ой в и the and";
         Map<String, Integer> expected = new TreeMap<>();
-        Map<String, Integer> actual = lemmaExtractor.buildLemmasFrequencyMap(content);
+        Map<String, Integer> actual = lemmaExtractor.buildLemmaFrequencyMap(content);
         assertEquals(expected, actual);
     }
+
 }

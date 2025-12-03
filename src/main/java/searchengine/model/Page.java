@@ -3,6 +3,7 @@ package searchengine.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.SQLInsert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.Objects;
 )
 @Getter
 @Setter
+@SQLInsert(sql = "INSERT INTO page (code,content,path,site_id) values (?, ?, ?, ?) ON DUPLICATE KEY UPDATE code=code")
 public class Page implements Comparable<Page> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

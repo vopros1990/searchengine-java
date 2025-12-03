@@ -7,9 +7,6 @@ import org.springframework.stereotype.Service;
 import searchengine.model.IndexingStatus;
 import searchengine.exceptions.IndexingException;
 import searchengine.model.Site;
-import searchengine.repositories.IndexRepository;
-import searchengine.repositories.LemmaRepository;
-import searchengine.repositories.PageRepository;
 import searchengine.repositories.SiteRepository;
 import searchengine.services.data.DatabaseCleanupService;
 import searchengine.services.indexing.service.IndexingService;
@@ -35,6 +32,7 @@ public class IndexingServiceImpl implements IndexingService {
     private List<Site> indexingSites;
     private int currentIndexingSitesCount = 0;
     private boolean isIndexingStarted = false;
+    private boolean isIndexingStopping = false;
 
     @Override
     public void startIndexing() throws IndexingException {
@@ -52,27 +50,39 @@ public class IndexingServiceImpl implements IndexingService {
                         databaseCleanupService.clearIndexingData(existingSiteInDatabase);
 
                     siteConfig.setStatus(IndexingStatus.INDEXING);
+                    siteConfig.setId(null);
+                    siteConfig.setLastError(null);
                     Site indexingSite = siteRepository.save(siteConfig);
                     currentIndexingSitesCount++;
 
                     processSiteIndexing(indexingSite);
-                }));
+                })
+        );
 
         isIndexingStarted = true;
     }
 
     @Override
     public void stopIndexing() throws IndexingException {
-        if (!siteRepository.existsByStatus(IndexingStatus.INDEXING))
+        if (!siteRepository.existsByStatus(IndexingStatus.INDEXING) || !isIndexingStarted)
             throw new IndexingException("Индексация не запущена");
 
-        processIndexingCancellation();
+        if (isIndexingStopping)
+            throw new IndexingException("Индексация в процессе остановки");
 
-        siteRepository.findByStatus(IndexingStatus.INDEXING).forEach(
-                site -> {
-                    site.setStatus(IndexingStatus.FAILED);
-                    site.setLastError("Индексация отменена пользователем");
-                    siteRepository.save(site);
+        isIndexingStopping = true;
+
+        taskExecutor.runAsync(() -> {
+            processIndexingCancellation();
+
+            siteRepository.findByStatus(IndexingStatus.INDEXING).forEach(
+                    site -> {
+                        site.setStatus(IndexingStatus.FAILED);
+                        site.setLastError("Индексация отменена пользователем");
+                        siteRepository.save(site);
+                    });
+
+            isIndexingStopping = false;
         });
     }
 
@@ -91,7 +101,7 @@ public class IndexingServiceImpl implements IndexingService {
                             )
                     );
 
-            indexingSite.setStatus(IndexingStatus.INDEXING);
+            indexingSite.setStatus(IndexingStatus.INDEXED);
             indexingSite = siteRepository.save(indexingSite);
         }
 
@@ -114,10 +124,8 @@ public class IndexingServiceImpl implements IndexingService {
                     if (--currentIndexingSitesCount == 0)
                         taskExecutor.shutdown();
                 },
-                (exception) -> {
-                    log.info(exception.getMessage());
-                }
-        );
+                (exception) -> exception.printStackTrace());
+
     }
 
     private void processIndexingCancellation() {

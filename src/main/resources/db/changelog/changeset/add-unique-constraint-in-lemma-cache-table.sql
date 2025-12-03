@@ -1,0 +1,1 @@
+ALTER TABLE lemma_cache ADD UNIQUE (word);

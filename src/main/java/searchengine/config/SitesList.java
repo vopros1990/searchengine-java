@@ -6,7 +6,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
-import searchengine.model.IndexingStatus;
 import searchengine.model.Site;
 
 import java.time.LocalDateTime;

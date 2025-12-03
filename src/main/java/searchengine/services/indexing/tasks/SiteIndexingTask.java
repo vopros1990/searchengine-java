@@ -5,13 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 import searchengine.common.task.TaskSleepBlocker;
+import searchengine.common.text.HtmlUtils;
 import searchengine.exceptions.IndexingServiceException;
 import searchengine.model.*;
 import searchengine.repositories.PageRepository;
 import searchengine.repositories.SiteRepository;
 import searchengine.services.indexing.crawler.PageFetcher;
-import searchengine.services.lemma.impl.LemmaExtractor;
+import searchengine.services.indexing.service.LemmaExtractorService;
+import searchengine.services.indexing.service.impl.LemmaExtractorServiceImpl;
 import searchengine.common.text.URLUtils;
+import searchengine.services.mapper.LemmaIndexMapper;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,7 +35,7 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
     private final SiteRepository siteRepository;
     private final PageRepository pageRepository;
     private final PageFetcher pageFetcher;
-    private final LemmaExtractor lemmaExtractor;
+    private final LemmaExtractorService lemmaExtractorService;
 
     private final Set<String> visitedPaths;
     private final List<String> pathsToProcess;
@@ -47,7 +50,7 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
                                SiteRepository siteRepository,
                                PageRepository pageRepository,
                                PageFetcher pageFetcher,
-                               LemmaExtractor lemmaExtractor) {
+                               LemmaExtractorServiceImpl morphologyService) {
         this(
                 site,
                 new ArrayList<>(),
@@ -55,7 +58,7 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
                 siteRepository,
                 pageRepository,
                 pageFetcher,
-                lemmaExtractor,
+                morphologyService,
                 new AtomicBoolean(false)
         );
 
@@ -69,7 +72,7 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
                              SiteRepository siteRepository,
                              PageRepository pageRepository,
                              PageFetcher pageFetcher,
-                             LemmaExtractor lemmaExtractor,
+                             LemmaExtractorService lemmaExtractorService,
                              AtomicBoolean isIndexingStopped) {
         this.site = site;
         this.pathsToProcess = pathsToProcess;
@@ -77,7 +80,7 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
         this.siteRepository = siteRepository;
         this.pageRepository = pageRepository;
         this.pageFetcher = pageFetcher;
-        this.lemmaExtractor = lemmaExtractor;
+        this.lemmaExtractorService = lemmaExtractorService;
         this.isIndexingStopped = isIndexingStopped;
         this.baseUrl = URLUtils.extractBaseUrl(site.getUrl());
         this.entryPointPath = URLUtils.extractEntryPointPath(site.getUrl());
@@ -91,7 +94,7 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
                 siteRepository,
                 pageRepository,
                 pageFetcher,
-                lemmaExtractor,
+                lemmaExtractorService,
                 isIndexingStopped
         );
     }
@@ -117,6 +120,7 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
         try {
             Page page = pageFetcher.fetchPage(baseUrl + entryPointPath);
             page.setSite(site);
+            page.setPath("/");
 
             visitedPaths.add(entryPointPath);
 
@@ -171,6 +175,7 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
             try {
                 Page page = pageFetcher.fetchPage(baseUrl + path);
                 page.setSite(site);
+                page.setPath(page.getPath().replaceAll("^" + entryPointPath, "/"));
 
                 List<String> extractedPaths = new ArrayList<>();
                 if(!extractFilteredRelativePaths(page.getContent(), extractedPaths))
@@ -196,7 +201,7 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
         int splitIndex = pathsToProcess.size() / 2;
 
         List<String> leftBranch = pathsToProcess.subList(0, splitIndex);
-        List<String> rightBranch = pathsToProcess.subList(splitIndex + 1, pathsToProcess.size() - 1);
+        List<String> rightBranch = pathsToProcess.subList(splitIndex, pathsToProcess.size());
 
         SiteIndexingTask leftSubTask = createSubTask(leftBranch);
         SiteIndexingTask rightSubTask = createSubTask(rightBranch);
@@ -212,20 +217,11 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
     }
 
     private void processPageLemmas(Page page) {
-        lemmaExtractor.buildLemmasFrequencyMap(page.getContent())
-                .forEach((word, frequency) -> {
-                    Lemma lemma = new Lemma();
-                    lemma.setSite(site);
-                    lemma.setLemma(word);
-                    lemma.setFrequency(1);
-
-                    Index index = new Index();
-                    index.setPage(page);
-                    index.setRank((float) frequency);
-
-                    lemma.addIndex(index);
-                    page.addIndex(index);
-                });
+        Map<String, Integer> lemmasFrequencyMap =
+                lemmaExtractorService.buildLemmaFrequencyMap(
+                        HtmlUtils.stripHtmlTags(page.getContent())
+                );
+        LemmaIndexMapper.mapToEntities(page, site, lemmasFrequencyMap);
     }
 
     @Transactional

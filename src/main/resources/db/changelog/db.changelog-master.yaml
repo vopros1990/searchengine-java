@@ -17,3 +17,11 @@ databaseChangeLog:
       file: db/changelog/changeset/add-unique-constraint-in-site-table.sql
   - include:
       file: db/changelog/changeset/add-unique-constraint-in-lemma-table.sql
+  - include:
+      file: db/changelog/changeset/create-idx-lemma-in-lemma-table.sql
+  - include:
+      file: db/changelog/changeset/create-lemma-cache-table.sql
+  - include:
+      file: db/changelog/changeset/add-unique-constraint-in-lemma-cache-table.sql
+  - include:
+      file: db/changelog/changeset/create-idx-word-in-lemma-cache-table.sql

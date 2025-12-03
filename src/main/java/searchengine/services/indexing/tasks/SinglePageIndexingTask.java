@@ -3,25 +3,30 @@ package searchengine.services.indexing.tasks;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import searchengine.common.task.TaskSleepBlocker;
+import searchengine.common.text.HtmlUtils;
 import searchengine.exceptions.IndexingServiceException;
 import searchengine.model.*;
 import searchengine.repositories.PageRepository;
 import searchengine.repositories.SiteRepository;
 import searchengine.services.indexing.crawler.PageFetcher;
-import searchengine.services.lemma.impl.LemmaExtractor;
+import searchengine.services.indexing.service.LemmaExtractorService;
+import searchengine.services.indexing.service.impl.LemmaExtractorServiceImpl;
 import searchengine.common.text.URLUtils;
+import searchengine.services.mapper.LemmaIndexMapper;
 
+import java.util.Map;
 import java.util.concurrent.RecursiveTask;
 
 @Slf4j
 public class SinglePageIndexingTask extends RecursiveTask<IndexingStatus> {
     private final Site site;
+    private final String entryPointPath;
     private String url;
 
     private final SiteRepository siteRepository;
     private final PageRepository pageRepository;
     private final PageFetcher pageFetcher;
-    private final LemmaExtractor lemmaExtractor;
+    private final LemmaExtractorService lemmaExtractorService;
 
     private static final int SAVE_RETRY_MAX_ATTEMPTS = 5;
     private static final int SAVE_RETRY_DELAY_MILLIS = 50;
@@ -32,14 +37,15 @@ public class SinglePageIndexingTask extends RecursiveTask<IndexingStatus> {
             SiteRepository siteRepository,
             PageRepository pageRepository,
             PageFetcher pageFetcher,
-            LemmaExtractor lemmaExtractor
+            LemmaExtractorServiceImpl morphologyService
     ) {
         this.site = site;
+        this.entryPointPath = URLUtils.extractEntryPointPath(site.getUrl());
         this.url = url;
         this.siteRepository = siteRepository;
         this.pageRepository = pageRepository;
         this.pageFetcher = pageFetcher;
-        this.lemmaExtractor = lemmaExtractor;
+        this.lemmaExtractorService = morphologyService;
     }
 
     @Override
@@ -66,25 +72,19 @@ public class SinglePageIndexingTask extends RecursiveTask<IndexingStatus> {
 
     private void processIndexPage() throws IndexingServiceException {
         Page page = pageFetcher.fetchPage(url);
+
+        page.setPath(page.getPath().replaceAll("^" + entryPointPath, "/"));
+
         page.setSite(site);
 
         String content = page.getContent();
         if (content == null) return;
 
-        lemmaExtractor.buildLemmasFrequencyMap(content)
-                .forEach((word, frequency) -> {
-                    Lemma lemma = new Lemma();
-                    lemma.setSite(site);
-                    lemma.setLemma(word);
-                    lemma.setFrequency(1);
-
-                    Index index = new Index();
-                    index.setPage(page);
-                    index.setRank((float) frequency);
-
-                    lemma.addIndex(index);
-                    page.addIndex(index);
-                });
+        Map<String, Integer> lemmasFrequencyMap =
+                lemmaExtractorService.buildLemmaFrequencyMap(
+                        HtmlUtils.stripHtmlTags(page.getContent())
+                );
+        LemmaIndexMapper.mapToEntities(page, site, lemmasFrequencyMap);
 
         savePageWithRetry(page);
         siteRepository.updateStatusTime(site.getId());

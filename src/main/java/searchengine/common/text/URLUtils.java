@@ -8,6 +8,10 @@ public class URLUtils {
         return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
 
+    public static String removeLeadingSlash(String url) {
+        return url.startsWith("/") ? url.substring(1) : url;
+    }
+
     public static String extractEntryPointPath(String baseUrl) {
         if (baseUrl.matches("^https+://[^/]+/?$"))
             return "/";

@@ -1,6 +1,5 @@
 package searchengine.common.task;
 
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 

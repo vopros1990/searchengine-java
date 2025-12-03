@@ -11,7 +11,11 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
-@Table(name = "lemma")
+@Table(name = "lemma",
+        uniqueConstraints = @UniqueConstraint(
+        columnNames = {
+                "lemma", "site_id"
+        }))
 @Getter
 @Setter
 @SQLInsert(sql = "INSERT INTO lemma (frequency, lemma, site_id) values (?, ?, ?) ON DUPLICATE KEY UPDATE frequency=frequency+1")
@@ -21,7 +25,7 @@ public class Lemma implements Comparable<Lemma> {
     @Column(name = "id")
     private Integer id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "site_id")
     private Site site;
 
