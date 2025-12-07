@@ -156,7 +156,7 @@ public class SnippetServiceImpl implements SnippetService {
         List<ContentRange> sortedContentRanges = new ArrayList<>(contentRanges);
         sortedContentRanges.sort(Comparator.comparingInt(ContentRange::getStart));
 
-        List<ContentRange> mergedContentRanges = new ArrayList<>();
+        contentRanges.clear();
         ContentRange current = sortedContentRanges.get(0);
         int counter = 0;
 
@@ -164,17 +164,15 @@ public class SnippetServiceImpl implements SnippetService {
             boolean isOutOfRange = current.getEnd() < comparing.getStart();
 
             if (isOutOfRange) {
-                mergedContentRanges.add(current);
+                contentRanges.add(current);
                 current = comparing;
             }
 
             current.setEnd(Math.max(current.getEnd(), comparing.getEnd()));
 
             if (++counter == sortedContentRanges.size())
-                mergedContentRanges.add(current);
+                contentRanges.add(current);
         }
-
-        contentRanges = mergedContentRanges;
     }
 
     private void trimRangesSummaryLength(List<ContentRange> contentRanges, String text) {
