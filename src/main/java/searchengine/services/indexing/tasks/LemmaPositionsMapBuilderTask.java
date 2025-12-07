@@ -1,5 +1,6 @@
 package searchengine.services.indexing.tasks;
 
+import searchengine.common.text.TextUtils;
 import searchengine.services.morphology.MorphologyAnalyzer;
 
 import java.util.ArrayList;
@@ -66,13 +67,13 @@ public class LemmaPositionsMapBuilderTask extends RecursiveTask<Map<String, List
         int charsPerTask = 10_000;
 
         if(text.length() < charsPerTask) {
-            Pattern pattern = Pattern.compile("([a-zA-Zа-яА-Я-]+)");
+            Pattern pattern = Pattern.compile(TextUtils.WORD_REGEX);
             Matcher matcher = pattern.matcher(text);
 
             matcher.results().forEach(match -> {
-                String lemma = morphology.getWordNormalForm(matcher.group(1));
+                String lemma = morphology.getWordNormalForm(match.group());
                 if (lemma == null) return;
-                int index = match.start(1) + indexOffset;
+                int index = match.start() + indexOffset;
 
                 if (!lemmaList.isEmpty() && !lemmaList.contains(lemma)) return;
 

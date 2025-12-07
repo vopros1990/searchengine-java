@@ -20,9 +20,6 @@ public interface SiteRepository extends JpaRepository<Site, Integer> {
 
     Site findByUrlContaining(String url);
 
-    @Query(value = "SELECT * FROM site WHERE url IN ?;", nativeQuery = true)
-    List<Site> findByUrls(List<String> urls);
-
     @Modifying
     @Transactional
     @Query(value = "UPDATE site SET status_time = now() WHERE id = :siteId;", nativeQuery = true)
@@ -37,13 +34,4 @@ public interface SiteRepository extends JpaRepository<Site, Integer> {
     @Transactional
     @Query(value = "UPDATE site SET status_time = now(), status = :status WHERE id = :siteId;", nativeQuery = true)
     void updateStatusAndStatusTime(@Param("siteId") int id, @Param("status") String status);
-
-    @Modifying
-    @Transactional
-    @Query(value = "UPDATE site SET status_time = now(), last_error = :lastError, status = :status WHERE id = :siteId;", nativeQuery = true)
-    void updateLastErrorAndStatusAndStatusTime(@Param("siteId") int id, @Param("lastError") String lastError, @Param("status") String status);
-
-    @Modifying
-    @Query(value = "delete from site where id=?;", nativeQuery = true)
-    void deleteBySiteId(int id);
 }

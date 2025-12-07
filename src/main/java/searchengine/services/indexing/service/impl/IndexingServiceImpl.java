@@ -17,6 +17,7 @@ import searchengine.common.task.TaskExecutor;
 import searchengine.common.text.URLUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -124,7 +125,7 @@ public class IndexingServiceImpl implements IndexingService {
                     if (--currentIndexingSitesCount == 0)
                         taskExecutor.shutdown();
                 },
-                (exception) -> exception.printStackTrace());
+                (exception) -> log.info(Arrays.toString(exception.getStackTrace())));
 
     }
 

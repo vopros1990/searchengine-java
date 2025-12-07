@@ -11,7 +11,7 @@ import java.util.Map;
 public class LemmaIndexMapper {
     public static void mapToEntities(Page page, Site site, Map<String, Integer> lemmasFrequencyMap) {
         Integer maxLemmaFrequency = lemmasFrequencyMap.values().stream()
-                .max(Comparator.comparing(Integer::intValue)).get();
+                .max(Comparator.comparing(Integer::intValue)).orElse(1);
 
         lemmasFrequencyMap.forEach((word, frequency) -> {
             Lemma lemma = new Lemma();

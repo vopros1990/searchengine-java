@@ -49,9 +49,8 @@ public class StatisticsServiceImpl implements StatisticsService {
             item.setUrl(indexingSite.getUrl());
 
             Integer siteId = indexingSite.getId();
-            int pages = 0;
-            int lemmas = 0;
-            String lastError = "";
+            int pages = 0, lemmas = 0;
+            String lastError;
 
             if (siteId != null) {
                 pages = pageRepository.countSitePages(siteId);

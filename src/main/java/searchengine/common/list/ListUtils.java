@@ -1,6 +1,7 @@
 package searchengine.common.list;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ListUtils {
     public static <T> T getFirst(Collection<T> collection) throws NullPointerException {
@@ -41,10 +42,13 @@ public class ListUtils {
         return listCopy.iterator().next();
     }
 
-    public static <T> List<T> getSubList(Collection<T> collection, int offset, int limit) throws NullPointerException {
-        if (collection.isEmpty()) throw new NullPointerException("Collection is empty");
+    public static List<Integer> decrease(Collection<Integer> collection, int decreaseValue, boolean includeNegativeValues) {
+        if (collection.isEmpty()) return new ArrayList<>(collection);
 
-        return collection.stream().skip(offset).limit(limit).toList();
+        return collection.stream()
+                .filter(i -> includeNegativeValues || (i - decreaseValue) >= 0)
+                .map(i -> i - decreaseValue)
+                .collect(Collectors.toList());
     }
 
     public static <T> List<T> getSubList(Collection<T> collection, int offset) throws NullPointerException {
@@ -80,8 +84,8 @@ public class ListUtils {
     }
 
     public static <T extends Number & Comparable<T>> List<T> trimValuesToRange(Collection<T> list, T minValue, T maxValue) throws NullPointerException {
-        if (list.isEmpty()) throw new NullPointerException("Collection is empty");
-        if (minValue == null || maxValue == null) throw new NullPointerException("minValue and maxValue cannot be null");
+        if (list.isEmpty()) return List.of();
+        if (minValue == null || maxValue == null) throw new NullPointerException("minValue or maxValue cannot be null");
 
         List<T> result = new ArrayList<>();
 

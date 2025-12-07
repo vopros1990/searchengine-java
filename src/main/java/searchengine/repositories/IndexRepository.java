@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository;
 import searchengine.model.Index;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface IndexRepository extends JpaRepository<Index, Integer> {

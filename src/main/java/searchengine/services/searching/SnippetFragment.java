@@ -44,12 +44,25 @@ public class SnippetFragment {
         searchTermsPositionsSet.addAll(indexList);
     }
 
+    public void replaceAllIndexes(List<Integer> indexList) {
+        searchTermsPositionsSet.clear();
+        searchTermsPositionsSet.addAll(indexList);
+    }
+
+    public void addIndexesToContentRange(List<Integer> indexList) {
+        searchTermsPositionsSet.addAll(ListUtils.trimValuesToRange(indexList, contentRangeStart, contentRangeEnd));
+    }
+
     public int searchTermPositionCount() {
         return searchTermsPositionsSet.size();
     }
 
+    public List<Integer> getSearchTermsPositionsList() {
+        return new ArrayList<>(searchTermsPositionsSet);
+    }
+
     public List<Integer> getSearchTermsRelativePositionsList(int startIndex) {
-        return searchTermsPositionsSet.stream().map(i -> i - startIndex).collect(Collectors.toList());
+        return searchTermsPositionsSet.stream().filter(i -> i >= startIndex).map(i -> i - startIndex).collect(Collectors.toList());
     }
 
     @Override

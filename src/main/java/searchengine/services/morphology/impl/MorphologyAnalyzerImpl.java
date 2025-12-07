@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.morphology.LuceneMorphology;
 import org.apache.lucene.morphology.english.EnglishLuceneMorphology;
 import org.apache.lucene.morphology.russian.RussianLuceneMorphology;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import searchengine.common.text.TextUtils;
 import searchengine.services.morphology.MorphologyAnalyzer;

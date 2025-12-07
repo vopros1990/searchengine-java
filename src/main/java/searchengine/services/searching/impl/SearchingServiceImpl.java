@@ -26,8 +26,6 @@ public class SearchingServiceImpl implements SearchingService {
 
     @Override
     public List<SearchResultDto> search(SearchRequestDto request) throws SearchingServiceException {
-        Long start = System.currentTimeMillis();
-
         String query = request.getQuery();
 
         if (query == null || query.isEmpty())

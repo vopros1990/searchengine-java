@@ -42,10 +42,6 @@ public class Page implements Comparable<Page> {
     @OneToMany(mappedBy = "page", cascade = CascadeType.ALL)
     private List<Index> indexList = new ArrayList<>();
 
-    public boolean isEmpty() {
-        return path == null && code == null && content == null && site == null && indexList == null;
-    }
-
     public void addIndex(Index index) {
         index.setPage(this);
         this.indexList.add(index);

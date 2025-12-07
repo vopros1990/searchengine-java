@@ -1,7 +1,6 @@
 package searchengine.services.indexing.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import searchengine.common.text.TextUtils;
 import searchengine.services.indexing.service.LemmaExtractorService;

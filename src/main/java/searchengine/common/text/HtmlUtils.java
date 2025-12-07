@@ -1,7 +1,5 @@
 package searchengine.common.text;
 
-import org.jsoup.Jsoup;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

@@ -6,9 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import searchengine.model.Lemma;
 
-import java.util.List;
-import java.util.Optional;
-
 @Repository
 public interface LemmaRepository extends JpaRepository<Lemma, Integer> {
     @Query(value = "SELECT COUNT(DISTINCT(lemma)) FROM lemma", nativeQuery = true)

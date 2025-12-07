@@ -8,186 +8,207 @@ import searchengine.common.text.HtmlUtils;
 import searchengine.common.text.TextUtils;
 import searchengine.services.indexing.service.impl.LemmaExtractorServiceImpl;
 import searchengine.services.searching.Snippet;
-import searchengine.services.searching.SnippetFragment;
 import searchengine.services.searching.SnippetService;
+import searchengine.services.searching.model.ContentRange;
+import searchengine.services.searching.model.Range;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SnippetServiceImpl implements SnippetService {
     private final LemmaExtractorServiceImpl lemmaExtractor;
-    private final static int SEARCH_TERMS_MAX_RANGE = 200;
-    private final static int CONTENT_MAX_RANGE = 250;
-    private final static int MAX_WORD_LENGTH = 100;
+    private final static int SEARCH_TERMS_RANGE_SPLIT_THRESHOLD = 180;
+    private final static int CONTENT_MAX_LENGTH = 220;
+    private final static int MAX_WORD_LOOKUP_LENGTH = 100;
     private final static int MAX_SENTENCE_LOOKUP_LENGTH = 100;
     private final static int CONTEXT_WORD_COUNT = 4;
-    private final static String HIGHLIGHT_TAG = "b";
-    private final static String SHORT_FRAGMENT_SEPARATOR = " <...> ";
+    private final static String BOLD_TAG = "b";
+    private final static String SHORT_FRAGMENT_SEPARATOR = " ... ";
 
     @Override
     public Snippet buildSnippet(String content, List<String> searchTerms) {
         String text = HtmlUtils.stripHtmlTags(content);
-        Map<String, List<Integer>> lemmaPositionsMap = lemmaExtractor.buildLemmaPositionsMap(text, searchTerms);
+        Collection<List<Integer>> searchTermsPositionsList = lemmaExtractor.buildLemmaPositionsMap(text, searchTerms).values();
 
-        if (lemmaPositionsMap.isEmpty())
+        if (searchTermsPositionsList.isEmpty())
             return Snippet.of();
 
-        List<SnippetFragment> snippetFragments = lemmaPositionsMap.size() == 1 ?
-                mapSingleTermRange(ListUtils.getFirst(lemmaPositionsMap.values())) :
-                mapMultiTermRange(lemmaPositionsMap.values());
+        int searchQueryLength = String.join(" ", searchTerms).length();
+        List<Integer> searchTermsPositionsFlat = searchTermsPositionsList.stream().flatMap(List::stream).sorted().toList();
+        List<ContentRange> contentRanges = mapToContentRanges(searchTermsPositionsList, text, searchQueryLength);
+        String snippetContent = prepareSnippetContent(text, contentRanges, searchTermsPositionsFlat);
 
-        mapContentRange(snippetFragments, text, CONTENT_MAX_RANGE);
-
-        return processSnippet(text, snippetFragments);
+        return Snippet.of(snippetContent);
     }
 
-    private int mapContentRange(List<SnippetFragment> snippetFragments, String text, int contentMaxRange) {
-        List<SnippetFragment> mappedFragments = new ArrayList<>();
-        snippetFragments.sort(Comparator.comparingInt(SnippetFragment::getTermsRange));
-        int reserve = contentMaxRange;
+    private List<ContentRange> mapToContentRanges(Collection<List<Integer>> searchTermsPositionsCollection, String text, int searchQueryLength) {
+        boolean splitWideRanges = searchQueryLength <= SEARCH_TERMS_RANGE_SPLIT_THRESHOLD;
 
-        for (SnippetFragment fragment : snippetFragments) {
+        List<Range> searchTermsRanges = mapSearchTermsRanges(new ArrayList<>(searchTermsPositionsCollection), splitWideRanges);
+        sortByTermsRangeRelevance(searchTermsRanges, searchQueryLength);
 
-            if (fragment.getTermsRange() > SEARCH_TERMS_MAX_RANGE) {
-                List<SnippetFragment> singleTermFragments = splitToSingleTermFragments(fragment);
-                reserve -= mapContentRange(singleTermFragments, text, reserve);
-                mappedFragments.addAll(singleTermFragments);
-                continue;
+        List<ContentRange> contentRanges = new ArrayList<>();
+        boolean isFirstRange = true;
+
+        for (Range range : searchTermsRanges) {
+            ContentRange contentRange = ContentRange.of(range);
+            contentRange.setSentenceStart(isFirstRange);
+            processContentRange(contentRange, text);
+            contentRanges.add(contentRange);
+            isFirstRange = false;
+        }
+
+        mergeOverlappingRanges(contentRanges);
+        trimRangesSummaryLength(contentRanges, text);
+
+        return contentRanges;
+    }
+
+    private List<Range> mapSearchTermsRanges(List<List<Integer>> searchTermsPositionsList, boolean splitWideRanges) {
+        searchTermsPositionsList.sort(Comparator.comparingInt(List::size));
+        List<Range> ranges = new ArrayList<>();
+        List<Integer> firstTermPositions = ListUtils.getFirst(searchTermsPositionsList);
+        boolean isSingleTermQuery = searchTermsPositionsList.size() == 1;
+
+        if (isSingleTermQuery) {
+            ranges.addAll(mapToSingleRanges(firstTermPositions));
+            return ranges;
+        }
+
+        List<List<Integer>> nextTermsPositionsList = ListUtils.getSubList(searchTermsPositionsList,1);
+
+        for (Integer firstTermPosition : firstTermPositions) {
+            List<Integer> positions = new ArrayList<>();
+            positions.add(firstTermPosition);
+            int min = Integer.MAX_VALUE;
+            int max = Integer.MIN_VALUE;
+
+            for (List<Integer> nextTermPositions : nextTermsPositionsList) {
+                int position = ListUtils.findNearestIntValue(firstTermPosition, nextTermPositions);
+                positions.add(position);
+                min = Math.min(position, min);
+                max = Math.max(position, max);
             }
 
-            mapFragmentContentRange(fragment, text, snippetFragments.indexOf(fragment) == 0);
+            Range range = Range.of(min, max);
 
-            if (fragment.getContentRange() > reserve) break;
-
-            mappedFragments.add(fragment);
-            reserve -= fragment.getContentRange();
+            if (range.getRange() >= SEARCH_TERMS_RANGE_SPLIT_THRESHOLD && splitWideRanges)
+                ranges.addAll(mapToSingleRanges(positions));
+            else
+                ranges.add(range);
         }
 
-        mappedFragments.sort(Comparator.comparingInt(SnippetFragment::getContentRangeStart));
-        snippetFragments.clear();
-        snippetFragments.addAll(mappedFragments);
-
-        return contentMaxRange - reserve;
+        return ranges;
     }
 
-    private List<SnippetFragment> splitToSingleTermFragments(SnippetFragment fragment) {
-        List<SnippetFragment> result = new ArrayList<>(fragment.searchTermPositionCount());
-
-        for (Integer termStart : fragment.getSearchTermsPositionsSet()) {
-            result.add(SnippetFragment.of(List.of(termStart)));
-        }
-
-        return result;
+    private List<Range> mapToSingleRanges(List<Integer> positions) {
+        return positions.stream().map(position -> Range.of(position, position)).collect(Collectors.toList());
     }
 
-    private void mapFragmentContentRange(SnippetFragment fragment, String text, boolean addSentenceStart) {
-        int firstTermStart = fragment.getTermsRangeStart();
-        int previousWordsStartIndex = TextUtils.indexOfPreviousWordsStart(text, firstTermStart, CONTEXT_WORD_COUNT);
-        int contentRangeStart = previousWordsStartIndex == -1 ? firstTermStart : previousWordsStartIndex;
-
-        if (addSentenceStart) {
-            int sentenceStartIndex = TextUtils.indexOfSentenceStart(text, firstTermStart, MAX_SENTENCE_LOOKUP_LENGTH);
-            contentRangeStart = sentenceStartIndex == -1 ? contentRangeStart : sentenceStartIndex;
-            addSentenceStart = sentenceStartIndex != -1;
-        }
-
-        int lastTermStart = fragment.getTermsRangeEnd();
-        int lastTermEnd = TextUtils.indexOfWordEnd(text, lastTermStart, MAX_WORD_LENGTH);
-
-        int contentRangeEnd = Math.max(
-                lastTermEnd,
-                TextUtils.indexOfNextWordsEnd(text, lastTermEnd, CONTEXT_WORD_COUNT)
+    private void sortByTermsRangeRelevance(List<Range> contentRanges, int searchQueryLength) {
+        contentRanges.sort(
+                Comparator.comparingInt(range -> {
+                    if (range.getRange() == 0) return range.getStart();
+                    return Math.abs(range.getRange() - searchQueryLength);
+                })
         );
-
-        fragment.setTermsRangeEnd(lastTermEnd);
-        fragment.setHasSentenceStart(addSentenceStart);
-        fragment.setContentRangeStart(contentRangeStart);
-        fragment.setContentRangeEnd(contentRangeEnd);
     }
 
-    private Snippet processSnippet(String text, List<SnippetFragment> snippetFragments) {
-        Snippet snippet = new Snippet();
+    private void processContentRange(ContentRange contentRange, String text) {
+        int previousContextWordsStart = TextUtils.indexOfPreviousWordsStart(text, contentRange.getStart(), CONTEXT_WORD_COUNT);
+        int contentRangeStart = previousContextWordsStart == -1 ? contentRange.getStart() : previousContextWordsStart;
 
-        int searchTermsMinRange = snippetFragments.stream()
-                .min(Comparator.comparingInt(SnippetFragment::getTermsRange)).orElse(SnippetFragment.of(List.of(1, 2)))
-                .getTermsRange();
+        if (contentRange.isSentenceStart()) {
+            int sentenceStartIndex = TextUtils.indexOfSentenceStart(text, contentRange.getStart(), MAX_SENTENCE_LOOKUP_LENGTH);
+            contentRangeStart = sentenceStartIndex == -1 ? contentRangeStart : sentenceStartIndex;
+            contentRange.setSentenceStart(sentenceStartIndex != -1);
+        }
 
-        snippet.setSearchTermsMinRange(searchTermsMinRange);
-        snippetFragments.sort(Comparator.comparingInt(SnippetFragment::getContentRangeStart));
-        snippet.setContent(prepareSnippetContent(text, snippetFragments));
+        int lastWordEnd = TextUtils.indexOfWordEnd(text, contentRange.getEnd(), MAX_WORD_LOOKUP_LENGTH);
+        int nextContextWordsEnd = TextUtils.indexOfNextWordsEnd(text, contentRange.getEnd(), CONTEXT_WORD_COUNT);
+        int contentRangeEnd = nextContextWordsEnd == -1 ? lastWordEnd : nextContextWordsEnd;
 
-        return snippet;
+        contentRange.setStart(contentRangeStart);
+        contentRange.setEnd(contentRangeEnd);
     }
 
-    private String prepareSnippetContent(String text, List<SnippetFragment> snippetFragments) {
+    private void mergeOverlappingRanges(List<ContentRange> contentRanges) {
+        List<ContentRange> sortedContentRanges = new ArrayList<>(contentRanges);
+        sortedContentRanges.sort(Comparator.comparingInt(ContentRange::getStart));
+
+        List<ContentRange> mergedContentRanges = new ArrayList<>();
+        ContentRange current = sortedContentRanges.get(0);
+        int counter = 0;
+
+        for (ContentRange comparing : sortedContentRanges) {
+            boolean isOutOfRange = current.getEnd() < comparing.getStart();
+
+            if (isOutOfRange) {
+                mergedContentRanges.add(current);
+                current = comparing;
+            }
+
+            current.setEnd(Math.max(current.getEnd(), comparing.getEnd()));
+
+            if (++counter == sortedContentRanges.size())
+                mergedContentRanges.add(current);
+        }
+
+        contentRanges = mergedContentRanges;
+    }
+
+    private void trimRangesSummaryLength(List<ContentRange> contentRanges, String text) {
+        List<ContentRange> contentRangesCopy = new ArrayList<>(contentRanges);
+        contentRanges.clear();
+        int lengthReserve = CONTENT_MAX_LENGTH;
+
+        for (ContentRange contentRange : contentRangesCopy) {
+            if (contentRange.getRange() > lengthReserve) {
+                int trimIndex = contentRange.getStart() + lengthReserve;
+                contentRange.setEnd(TextUtils.indexOfWordEnd(text, trimIndex, MAX_WORD_LOOKUP_LENGTH));
+                contentRanges.add(contentRange);
+                break;
+            }
+
+            contentRanges.add(contentRange);
+            lengthReserve -= contentRange.getRange();
+        }
+    }
+
+    private String prepareSnippetContent(String text, List<ContentRange> contentRanges, List<Integer> searchTermsPositionsFlat) {
         StringBuilder contentBuilder = new StringBuilder();
+        boolean isFirstFragment = true;
 
-        for (SnippetFragment fragment : snippetFragments) {
-            int contentRangeStart = fragment.getContentRangeStart();
-            int contentRangeEnd = fragment.getContentRangeEnd();
-            int termsRangeStart = fragment.getTermsRangeStart();
-            int termsRangeEnd = fragment.getTermsRangeEnd();
-
-            boolean hasSentenceStart = fragment.isHasSentenceStart();
-
-            if (!hasSentenceStart && snippetFragments.indexOf(fragment) == 0)
-                contentBuilder.append(SHORT_FRAGMENT_SEPARATOR);
-
-            contentBuilder.append(text, contentRangeStart, termsRangeStart);
-
-            String termsRangeContent = text.substring(termsRangeStart, termsRangeEnd);
-
-            termsRangeContent = TextUtils.wrapAllWords(
-                    termsRangeContent,
-                    fragment.getSearchTermsRelativePositionsList(termsRangeStart),
-                    (word) -> HtmlUtils.wrapByTag(word, HIGHLIGHT_TAG)
+        for (ContentRange contentRange : contentRanges) {
+            int contentRangeStart = contentRange.getStart();
+            int contentRangeEnd = contentRange.getEnd();
+            String contentRangeText = text.substring(contentRangeStart, contentRangeEnd);
+            List<Integer> searchTermsRelativeIndexes = ListUtils.decrease(
+                    ListUtils.trimValuesToRange(
+                            searchTermsPositionsFlat,
+                            contentRangeStart,
+                            contentRangeEnd),
+                    contentRangeStart,
+                    false
             );
 
-            contentBuilder.append(termsRangeContent);
-            contentBuilder.append(text, termsRangeEnd, contentRangeEnd);
+            if (!contentRange.isSentenceStart() && isFirstFragment)
+                contentBuilder.append(SHORT_FRAGMENT_SEPARATOR);
+
+            contentRangeText = TextUtils.wrapAllWords(
+                    contentRangeText,
+                    searchTermsRelativeIndexes,
+                    (word) -> HtmlUtils.wrapByTag(word, BOLD_TAG)
+            );
+
+            contentBuilder.append(contentRangeText);
             contentBuilder.append(SHORT_FRAGMENT_SEPARATOR);
+            isFirstFragment = false;
         }
 
         return contentBuilder.toString();
-    }
-
-    private List<SnippetFragment> mapSingleTermRange(List<Integer> termPositions) {
-        Collections.sort(termPositions);
-
-        List<SnippetFragment> snippetFragments = new ArrayList<>();
-        snippetFragments.add(
-                SnippetFragment.of(termPositions)
-        );
-
-        return snippetFragments;
-    }
-
-    private List<SnippetFragment> mapMultiTermRange(Collection<List<Integer>> termPositions) {
-        List<Integer> firstTermPositions = ListUtils.getFirst(termPositions);
-        List<List<Integer>> nextTermsPositionsList = ListUtils.getSubList(termPositions,1);
-        List<SnippetFragment> snippetFragments = new ArrayList<>();
-
-        for (Integer firstTermPosition : firstTermPositions) {
-            List<Integer> searchTermsPositionsList = new ArrayList<>();
-            searchTermsPositionsList.add(firstTermPosition);
-
-            for (List<Integer> nextTermPositions : nextTermsPositionsList)
-                searchTermsPositionsList.add(ListUtils.findNearestIntValue(firstTermPosition, nextTermPositions));
-
-            SnippetFragment fragment = SnippetFragment.of(searchTermsPositionsList);
-
-            termPositions.forEach(list -> fragment.addAllIndexes(
-                    ListUtils.trimValuesToRange(
-                            list,
-                            fragment.getTermsRangeStart(),
-                            fragment.getTermsRangeEnd())
-            ));
-
-            snippetFragments.add(fragment);
-        }
-
-        return snippetFragments;
     }
 }

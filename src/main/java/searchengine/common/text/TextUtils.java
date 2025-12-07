@@ -10,12 +10,12 @@ import java.util.regex.Pattern;
 
 @Slf4j
 public class TextUtils {
-    private final static String WORD_SEPARATOR_REGEX = "[^a-zA-Zа-яА-ЯёЁ0-9-]+";
-    private final static String WORD_REGEX = "[a-zA-Zа-яА-Я-0-9-]+";
-    private final static String SENTENCE_BEGIN_REVERSE_REGEX = "[A-ZА-ЯЁ]{1,1}$|[A-ZА-ЯЁ]{1,1}\\s+\\.|[A-ZА-ЯЁ]{1,1}\\.";
+    public final static String WORD_SEPARATOR_REGEX = "[^a-zA-Zа-яА-ЯёЁ0-9-]+";
+    public final static String WORD_REGEX = "[a-zA-Zа-яА-ЯёЁ0-9-]+";
+    public final static String SENTENCE_BEGIN_REVERSE_REGEX = "[A-ZА-ЯЁ]$|[A-ZА-ЯЁ]\\s+[.!?]|[A-ZА-ЯЁ][.!?]";
 
-    private final static String CYRILLIC_WORD_REGEX = "[а-яА-Я-]+";
-    private final static String LATIN_WORD_REGEX = "[a-zA-Z-]+";
+    public final static String CYRILLIC_WORD_REGEX = "[а-яА-Я-]+";
+    public final static String LATIN_WORD_REGEX = "[a-zA-Z-]+";
 
     public static List<String> extractWords(String text) {
         if (text == null) return List.of();
@@ -39,29 +39,27 @@ public class TextUtils {
         return word.matches(WORD_REGEX);
     }
 
-    public static int indexOfSentenceStart(String text, int referenceIndex, int sentenceLengthLimit) {
+    public static int indexOfSentenceStart(String text, int referenceIndex, int lookupLimit) {
         if (referenceIndex == 0) return 0;
 
-        int startIndex = text.length() < sentenceLengthLimit ? 0 : Math.max(referenceIndex, sentenceLengthLimit) - sentenceLengthLimit;
+        int startIndex = text.length() < lookupLimit ? 0 : Math.max(referenceIndex, lookupLimit) - lookupLimit;
         String reversedText = reverse(text.substring(startIndex, referenceIndex));
         Matcher matcher = Pattern.compile(SENTENCE_BEGIN_REVERSE_REGEX).matcher(reversedText);
         if (!matcher.find()) return -1;
         return referenceIndex - matcher.start() - 1;
     }
 
-    public static int indexOfSentenceStart(String text, int referenceIndex) {
-        return indexOfSentenceStart(text, referenceIndex, 0);
-    }
-
     public static int indexOfNextWordsEnd(String text, int referenceIndex, int wordsCountLimit) {
+        if (text.substring(referenceIndex).matches("^" + WORD_REGEX + ".*")) wordsCountLimit++;
+
         String processingText = referenceIndex == 0 ? text : text.substring(referenceIndex);
         Matcher matcher = Pattern.compile(WORD_REGEX).matcher(processingText);
         List<MatchResult> matchResults = matcher.results().toList();
 
-        if (matchResults.isEmpty()) return -1;
+        if (matchResults.isEmpty()) return referenceIndex;
 
         wordsCountLimit = Math.min(matchResults.size(), wordsCountLimit);
-        return referenceIndex + matchResults.get(Math.min(wordsCountLimit, matchResults.size()) - 1).end();
+        return referenceIndex + matchResults.get(wordsCountLimit - 1).end();
     }
 
     public static int indexOfPreviousWordsStart(String text, int referenceIndex, int wordsCountLimit) {
@@ -74,8 +72,8 @@ public class TextUtils {
         );
     }
 
-    public static int indexOfWordEnd(String text, int referenceIndex, int lengthLimit) {
-        int endIndex = text.length() < lengthLimit + referenceIndex ? text.length() - 1 : lengthLimit + referenceIndex;
+    public static int indexOfWordEnd(String text, int referenceIndex, int lookupLimit) {
+        int endIndex = text.length() < lookupLimit + referenceIndex ? text.length() - 1 : lookupLimit + referenceIndex;
 
         Matcher matcher = Pattern.compile(WORD_SEPARATOR_REGEX).matcher(
                 text.substring(referenceIndex, endIndex));
@@ -83,8 +81,18 @@ public class TextUtils {
         return (matcher.find()) ? matcher.start() + referenceIndex : text.length() - 1;
     }
 
+    public static int indexOfWordStart(String text, int referenceIndex, int lookupLimit) {
+        if (referenceIndex == 0) return 0;
+
+        return referenceIndex - indexOfWordEnd(
+                reverse(text.substring(0, referenceIndex)),
+                0,
+                lookupLimit
+        );
+    }
+
     public static String wrapAllWords(String text, List<Integer> wordsIndexList, Function<String, String> wrapper) {
-        if (wordsIndexList.isEmpty()) throw new NullPointerException("wordsIndexList cannot be null");
+        if (wordsIndexList.isEmpty()) return text;
 
         Matcher matcher = Pattern.compile(WORD_REGEX).matcher(text);
         StringBuilder builder = new StringBuilder();
@@ -101,6 +109,7 @@ public class TextUtils {
                 startIndex = matcher.end();
             }
         }
+        builder.append(text, startIndex, text.length());
 
         return builder.toString();
     }

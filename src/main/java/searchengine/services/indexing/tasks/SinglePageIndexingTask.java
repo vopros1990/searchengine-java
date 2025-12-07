@@ -21,7 +21,7 @@ import java.util.concurrent.RecursiveTask;
 public class SinglePageIndexingTask extends RecursiveTask<IndexingStatus> {
     private final Site site;
     private final String entryPointPath;
-    private String url;
+    private final String url;
 
     private final SiteRepository siteRepository;
     private final PageRepository pageRepository;
