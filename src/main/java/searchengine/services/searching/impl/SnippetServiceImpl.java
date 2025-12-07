@@ -31,40 +31,29 @@ public class SnippetServiceImpl implements SnippetService {
     @Override
     public Snippet buildSnippet(String content, List<String> searchTerms) {
         String text = HtmlUtils.stripHtmlTags(content);
-        Collection<List<Integer>> searchTermsPositionsList = lemmaExtractor.buildLemmaPositionsMap(text, searchTerms).values();
+        List<List<Integer>> searchTermsPositionsList = new ArrayList<>(
+                lemmaExtractor.buildLemmaPositionsMap(text, searchTerms).values());
 
         if (searchTermsPositionsList.isEmpty())
             return Snippet.of();
 
         int searchQueryLength = String.join(" ", searchTerms).length();
-        List<Integer> searchTermsPositionsFlat = searchTermsPositionsList.stream().flatMap(List::stream).sorted().toList();
-        List<ContentRange> contentRanges = mapToContentRanges(searchTermsPositionsList, text, searchQueryLength);
-        String snippetContent = prepareSnippetContent(text, contentRanges, searchTermsPositionsFlat);
-
-        return Snippet.of(snippetContent);
-    }
-
-    private List<ContentRange> mapToContentRanges(Collection<List<Integer>> searchTermsPositionsCollection, String text, int searchQueryLength) {
         boolean splitWideRanges = searchQueryLength <= SEARCH_TERMS_RANGE_SPLIT_THRESHOLD;
 
-        List<Range> searchTermsRanges = mapSearchTermsRanges(new ArrayList<>(searchTermsPositionsCollection), splitWideRanges);
-        sortByTermsRangeRelevance(searchTermsRanges, searchQueryLength);
+        List<Range> searchTermsRanges = mapSearchTermsRanges(
+                searchTermsPositionsList,
+                splitWideRanges
+        );
 
-        List<ContentRange> contentRanges = new ArrayList<>();
-        boolean isFirstRange = true;
+        double searchTermsRelevance = sortByTermsRangeRelevance(searchTermsRanges, searchQueryLength);
 
-        for (Range range : searchTermsRanges) {
-            ContentRange contentRange = ContentRange.of(range);
-            contentRange.setSentenceStart(isFirstRange);
-            processContentRange(contentRange, text);
-            contentRanges.add(contentRange);
-            isFirstRange = false;
-        }
+        String snippetContent = prepareSnippetContent(
+                text,
+                mapToContentRanges(searchTermsRanges, text),
+                joinAllPositions(searchTermsPositionsList)
+        );
 
-        mergeOverlappingRanges(contentRanges);
-        trimRangesSummaryLength(contentRanges, text);
-
-        return contentRanges;
+        return Snippet.of(snippetContent, searchTermsRelevance);
     }
 
     private List<Range> mapSearchTermsRanges(List<List<Integer>> searchTermsPositionsList, boolean splitWideRanges) {
@@ -83,8 +72,8 @@ public class SnippetServiceImpl implements SnippetService {
         for (Integer firstTermPosition : firstTermPositions) {
             List<Integer> positions = new ArrayList<>();
             positions.add(firstTermPosition);
-            int min = Integer.MAX_VALUE;
-            int max = Integer.MIN_VALUE;
+            int min = firstTermPosition;
+            int max = firstTermPosition;
 
             for (List<Integer> nextTermPositions : nextTermsPositionsList) {
                 int position = ListUtils.findNearestIntValue(firstTermPosition, nextTermPositions);
@@ -108,13 +97,41 @@ public class SnippetServiceImpl implements SnippetService {
         return positions.stream().map(position -> Range.of(position, position)).collect(Collectors.toList());
     }
 
-    private void sortByTermsRangeRelevance(List<Range> contentRanges, int searchQueryLength) {
+    private List<Integer> joinAllPositions(List<List<Integer>> searchTermsPositionsList) {
+        return searchTermsPositionsList.stream().flatMap(List::stream).sorted().toList();
+    }
+
+    private List<ContentRange> mapToContentRanges(List<Range> searchTermsRanges, String text) {
+        List<ContentRange> contentRanges = new ArrayList<>();
+        boolean isFirstRange = true;
+
+        for (Range range : searchTermsRanges) {
+            ContentRange contentRange = ContentRange.of(range);
+            contentRange.setSentenceStart(isFirstRange);
+            processContentRange(contentRange, text);
+            contentRanges.add(contentRange);
+            isFirstRange = false;
+        }
+
+        mergeOverlappingRanges(contentRanges);
+        trimRangesSummaryLength(contentRanges, text);
+
+        return contentRanges;
+    }
+
+    private double sortByTermsRangeRelevance(List<Range> contentRanges, int searchQueryLength) {
         contentRanges.sort(
                 Comparator.comparingInt(range -> {
                     if (range.getRange() == 0) return range.getStart();
                     return Math.abs(range.getRange() - searchQueryLength);
                 })
         );
+
+        int range = ListUtils.getFirst(contentRanges).getRange();
+
+        if (range == 0) return 0;
+
+        return (double) Math.max(range, searchQueryLength) / Math.min(range, searchQueryLength);
     }
 
     private void processContentRange(ContentRange contentRange, String text) {
@@ -178,7 +195,7 @@ public class SnippetServiceImpl implements SnippetService {
         }
     }
 
-    private String prepareSnippetContent(String text, List<ContentRange> contentRanges, List<Integer> searchTermsPositionsFlat) {
+    private String prepareSnippetContent(String text, List<ContentRange> contentRanges, List<Integer> searchTermsPositions) {
         StringBuilder contentBuilder = new StringBuilder();
         boolean isFirstFragment = true;
 
@@ -188,7 +205,7 @@ public class SnippetServiceImpl implements SnippetService {
             String contentRangeText = text.substring(contentRangeStart, contentRangeEnd);
             List<Integer> searchTermsRelativeIndexes = ListUtils.decrease(
                     ListUtils.trimValuesToRange(
-                            searchTermsPositionsFlat,
+                            searchTermsPositions,
                             contentRangeStart,
                             contentRangeEnd),
                     contentRangeStart,

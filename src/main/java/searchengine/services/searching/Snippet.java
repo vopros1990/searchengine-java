@@ -7,7 +7,15 @@ import lombok.Setter;
 @Setter
 public class Snippet {
     private String content;
-    private int searchTermsMinRange;
+    private double searchTermsRelevance;
+
+    public static Snippet of(String content, double searchTermsRelevance) {
+        Snippet snippet = new Snippet();
+        snippet.setContent(content);
+        snippet.setSearchTermsRelevance(searchTermsRelevance);
+
+        return snippet;
+    }
 
     public static Snippet of(String content) {
         Snippet snippet = new Snippet();

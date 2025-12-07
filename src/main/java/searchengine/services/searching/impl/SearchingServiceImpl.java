@@ -45,20 +45,13 @@ public class SearchingServiceImpl implements SearchingService {
         if (results.isEmpty())
             return List.of();
 
-        int minSnippetRange = Integer.MAX_VALUE;
-
         for (SearchResultDto result : results) {
             String content = result.getSnippet();
             Snippet snippet = snippetBuilder.buildSnippet(content, searchTerms);
             result.setTitle(HtmlUtils.getTagContent("title", content));
             result.setSnippet(snippet.getContent());
             result.setUri(URLUtils.removeLeadingSlash(result.getUri()));
-            result.setRelevance(result.getRelevance() * snippet.getSearchTermsMinRange());
-            minSnippetRange = Math.min(minSnippetRange, snippet.getSearchTermsMinRange());
-        }
-
-        for (SearchResultDto result : results) {
-            result.setRelevance(result.getRelevance() / minSnippetRange);
+            result.setRelevance(result.getRelevance() * snippet.getSearchTermsRelevance());
         }
 
         results.sort(Comparator.comparingDouble(SearchResultDto::getRelevance).reversed());

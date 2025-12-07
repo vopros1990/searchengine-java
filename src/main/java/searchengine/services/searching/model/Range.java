@@ -21,8 +21,6 @@ public class Range {
         return end - start;
     }
 
-
-
     @Override
     public String toString() {
         return "<br>Range{<br>" +
