@@ -8,6 +8,6 @@ import lombok.Setter;
 public class SearchRequestDto {
     private String query;
     private String site;
-    private int offset;
-    private int limit;
+    private int offset = 0;
+    private int limit = 20;
 }

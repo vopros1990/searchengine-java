@@ -96,6 +96,48 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
             """, nativeQuery = true)
     List<SearchResultDto> searchPages(List<String> searchTerms, Integer searchTermsSize, Integer offset, Integer limit, String siteUrl);
 
+    @Query(value = """
+            WITH
+            	total_pages AS (
+            		SELECT COUNT(1) AS count, site_id
+            		FROM page
+            		GROUP BY site_id
+            	),
+            	matched_pages AS (
+            		SELECT i.page_id AS page_id
+            		FROM `index` i
+            		LEFT JOIN lemma l ON l.id=i.lemma_id
+            		LEFT JOIN total_pages tp ON l.site_id=tp.site_id
+            		WHERE l.lemma IN :searchTerms
+            		GROUP BY i.page_id
+            		HAVING count(l.lemma) = :searchTermsSize
+            		ORDER BY i.page_id
+            	) SELECT COUNT(1) FROM matched_pages mp;
+            """, nativeQuery = true)
+    int searchPagesTotalCount(List<String> searchTerms, Integer searchTermsSize);
+
+    @Query(value = """
+            WITH
+            	total_pages AS (
+            		SELECT COUNT(1) AS count, p.site_id
+            		FROM page p
+            		LEFT JOIN site s ON p.site_id=s.id
+            		WHERE s.url=:siteUrl
+            		GROUP BY site_id
+            	),
+            	matched_pages AS (
+            		SELECT i.page_id AS page_id
+            		FROM `index` i
+            		LEFT JOIN lemma l ON l.id=i.lemma_id
+            		LEFT JOIN total_pages tp ON l.site_id=tp.site_id
+            		WHERE l.lemma IN :searchTerms AND l.site_id=tp.site_id
+            		GROUP BY i.page_id
+            		HAVING count(l.lemma) = :searchTermsSize
+            		ORDER BY i.page_id
+            	) SELECT COUNT(1) FROM matched_pages mp;
+            """, nativeQuery = true)
+    int searchPagesTotalCount(List<String> searchTerms, Integer searchTermsSize, String siteUrl);
+
     @Query(value = "select count(id) from page where site_id=?;", nativeQuery = true)
     int countSitePages(int siteId);
 

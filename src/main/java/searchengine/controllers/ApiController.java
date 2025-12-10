@@ -14,6 +14,7 @@ import searchengine.services.indexing.service.IndexingService;
 import searchengine.services.searching.SearchingService;
 import searchengine.services.statistics.StatisticsService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -76,9 +77,10 @@ public class ApiController {
     public ResponseEntity<ApiResponse> search(SearchRequestDto requestDto) {
         try {
             ApiResponse response = ApiResponse.ok();
-            List<SearchResultDto> searchResults = searchingService.search(requestDto);
+            List<SearchResultDto> searchResults = new ArrayList<>();
+            int foundPagesCount = searchingService.search(requestDto, searchResults);
             response.setData(searchResults);
-            response.setCount(searchResults.size());
+            response.setCount(foundPagesCount);
 
             return ResponseEntity.ok(response);
         } catch (SearchingServiceException e) {

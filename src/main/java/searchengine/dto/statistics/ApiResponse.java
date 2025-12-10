@@ -11,7 +11,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse {
     private boolean result = true;
-    private int count;
+    private Integer count;
     private List<?> data;
 
     public static ApiResponse ok() {

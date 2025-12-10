@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+import searchengine.common.text.URLUtils;
 import searchengine.model.Site;
 
 import java.time.LocalDateTime;
@@ -26,7 +27,7 @@ public class SitesList {
         return sites.stream().map(
                 siteConfig -> {
                     Site site = new Site();
-                    site.setUrl(siteConfig.getUrl());
+                    site.setUrl(URLUtils.removeTrailingSlash(siteConfig.getUrl()));
                     site.setName(siteConfig.getName());
                     site.setStatusTime(LocalDateTime.now());
                     return site;

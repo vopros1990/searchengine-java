@@ -7,5 +7,5 @@ import searchengine.exceptions.SearchingServiceException;
 import java.util.List;
 
 public interface SearchingService {
-    List<SearchResultDto> search(SearchRequestDto requestDto) throws SearchingServiceException;
+    int search(SearchRequestDto requestDto, List<SearchResultDto> results) throws SearchingServiceException;
 }

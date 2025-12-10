@@ -18,6 +18,8 @@ public interface SiteRepository extends JpaRepository<Site, Integer> {
 
     boolean existsByStatus(IndexingStatus status);
 
+    boolean existsByStatusAndUrl(IndexingStatus status, String url);
+
     Site findByUrlContaining(String url);
 
     @Modifying
