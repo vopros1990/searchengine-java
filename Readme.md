@@ -192,8 +192,8 @@ task-executor:
 <h2 id="lucene">Подключение модуля Lucene Morphology</h2>
 <p>Для работы модуля морфологического анализа нужно вручную подключить
 библиотеки Lucene Morphology</p>
-<p>Для этого просто скачайте файлы по <a href="#">ССЫЛКЕ</a>.</p>
-<p>Затем распакуйте и положите в каталог:</p>
+<p>Для этого просто скачайте файлы по <a href="https://drive.google.com/file/d/1t5bfxfJKq0xdKS9ZbfIrA8gTojCD5neJ/view?usp=sharing">ССЫЛКЕ</a>.</p>
+<p>Затем распакуйте содержимое архива (6 папок) в каталог:</p>
 <code style="background-color: #7777ff; color: white">src/main/resources/lemmatizer</code>
 
 <h2 id="developement-stuff">Особенности разработки приложения</h2>
