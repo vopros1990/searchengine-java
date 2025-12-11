@@ -97,7 +97,7 @@ public class SinglePageIndexingTask extends RecursiveTask<IndexingStatus> {
                 pageRepository.save(page);
                 return;
             } catch (Exception e) {
-                log.info(e.getCause().toString());
+                log.debug(e.getCause().toString());
                 TaskSleepBlocker.safeSleep(SAVE_RETRY_DELAY_MILLIS);
             }
         }

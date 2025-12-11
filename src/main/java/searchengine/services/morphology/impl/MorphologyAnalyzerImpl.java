@@ -41,7 +41,7 @@ public class MorphologyAnalyzerImpl implements MorphologyAnalyzer {
 
             return saveToCacheAndGet(word, morphology.getNormalForms(word).get(0));
         } catch (IOException e) {
-            log.info(e.getMessage());
+            log.debug(e.getMessage());
         }
 
         return null;

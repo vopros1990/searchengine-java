@@ -110,7 +110,7 @@ public class IndexingServiceImpl implements IndexingService {
 
         taskExecutor.submitAsync(task,
                 (status) -> taskExecutor.shutdown(),
-                (exception) -> log.info(exception.getMessage())
+                (exception) -> log.debug(exception.getMessage())
         );
     }
 
@@ -125,7 +125,7 @@ public class IndexingServiceImpl implements IndexingService {
                     if (--currentIndexingSitesCount == 0)
                         taskExecutor.shutdown();
                 },
-                (exception) -> log.info(Arrays.toString(exception.getStackTrace())));
+                (exception) -> log.debug(Arrays.toString(exception.getStackTrace())));
 
     }
 
