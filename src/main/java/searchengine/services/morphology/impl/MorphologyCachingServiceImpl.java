@@ -41,8 +41,8 @@ public class MorphologyCachingServiceImpl implements MorphologyCachingService {
             repository.save(word, lemma);
             cache.put(word, lemma);
         } catch (Exception e) {
-            log.info(e.getMessage());
-            log.info(word);
+            log.debug(e.getMessage());
+            log.debug(word);
         }
     }
 
