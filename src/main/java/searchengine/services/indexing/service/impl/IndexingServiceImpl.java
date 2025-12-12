@@ -45,7 +45,7 @@ public class IndexingServiceImpl implements IndexingService {
 
         taskExecutor.runAsync(() ->
                 indexingSites.forEach(siteConfig -> {
-                    Site existingSiteInDatabase = siteRepository.findByUrlContaining(siteConfig.getUrl());
+                    Site existingSiteInDatabase = siteRepository.findFirstByUrlContaining(siteConfig.getUrl());
 
                     if(existingSiteInDatabase != null)
                         databaseCleanupService.clearIndexingData(existingSiteInDatabase);
@@ -90,7 +90,10 @@ public class IndexingServiceImpl implements IndexingService {
     @Override
     public void indexPage(String url) throws IndexingException {
         String baseUrl = URLUtils.extractBaseUrl(url);
-        Site indexingSite = siteRepository.findByUrlContaining(baseUrl);
+
+        if (baseUrl.isEmpty()) throw new IndexingException("Некорректный URL");
+
+        Site indexingSite = siteRepository.findFirstByUrlContaining(baseUrl);
 
         if (indexingSite == null) {
             indexingSite = indexingSites.stream()

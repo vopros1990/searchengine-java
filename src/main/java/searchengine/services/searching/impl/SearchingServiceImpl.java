@@ -6,7 +6,9 @@ import org.springframework.stereotype.Service;
 import searchengine.common.text.HtmlUtils;
 import searchengine.dto.search.SearchRequestDto;
 import searchengine.dto.search.SearchResultDto;
-import searchengine.exceptions.SearchingServiceException;
+import searchengine.exceptions.BadRequestSearchingException;
+import searchengine.exceptions.NotIndexedSiteSearchingException;
+import searchengine.exceptions.SearchingException;
 import searchengine.model.IndexingStatus;
 import searchengine.model.Site;
 import searchengine.repositories.PageRepository;
@@ -29,7 +31,7 @@ public class SearchingServiceImpl implements SearchingService {
     private final List<Site> indexingSites;
 
     @Override
-    public int search(SearchRequestDto request, List<SearchResultDto> results) throws SearchingServiceException {
+    public int search(SearchRequestDto request, List<SearchResultDto> results) throws SearchingException {
         handleExceptions(request);
 
         String query = request.getQuery();
@@ -57,21 +59,21 @@ public class SearchingServiceImpl implements SearchingService {
         return resultsCount;
     }
 
-    private void handleExceptions(SearchRequestDto request) throws SearchingServiceException {
+    private void handleExceptions(SearchRequestDto request) throws SearchingException {
         String query = request.getQuery();
         String siteUrl = request.getSite();
 
         if (query == null || query.isEmpty())
-            throw new SearchingServiceException("Пустой поисковый запрос", 400);
+            throw new BadRequestSearchingException("Пустой поисковый запрос");
 
         if (siteUrl == null && !siteRepository.existsByStatus(IndexingStatus.INDEXED))
-            throw new SearchingServiceException("Сайты не проиндексированы", 400);
+            throw new NotIndexedSiteSearchingException("Сайты не проиндексированы");
 
         if (siteUrl != null && indexingSites.stream().noneMatch(indexingSite -> indexingSite.getUrl().equals(siteUrl)))
-            throw new SearchingServiceException("Сайт отсутствует в списке сайтов, разрешенных к индексации", 400);
+            throw new BadRequestSearchingException("Сайт отсутствует в списке сайтов, разрешенных к индексации");
 
         if (siteUrl != null && !siteRepository.existsByStatusAndUrl(IndexingStatus.INDEXED, siteUrl))
-            throw new SearchingServiceException("Сайт не проиндексирован", 400);
+            throw new NotIndexedSiteSearchingException("Сайт не проиндексирован");
     }
 
     private int getSearchResults(SearchRequestDto request, List<String> searchTerms, List<SearchResultDto> results) {

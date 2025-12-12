@@ -39,7 +39,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         List<DetailedStatisticsItem> detailed = new ArrayList<>();
 
         indexingSites.forEach(site -> {
-            Site indexingSite = siteRepository.findByUrlContaining(site.getUrl());
+            Site indexingSite = siteRepository.findFirstByUrlContaining(site.getUrl());
             if (indexingSite == null)
                 indexingSite = site;
 
