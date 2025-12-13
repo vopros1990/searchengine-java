@@ -1,1 +1,0 @@
-ALTER TABLE site ADD UNIQUE (url(255));

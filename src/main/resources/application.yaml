@@ -1,18 +1,19 @@
 spring:
   jpa:
-    database: mysql
+    database: postgresql
     show-sql: false
     hibernate:
       ddl-auto: validate
-      dialect: org.hibernate.dialect.MySQL8Dialect
+      dialect: org.hibernate.dialect.PostgreSQLDialect
     liquibase:
       changelog: classpath:db/changelog/db.changelog-master.yaml
       enabled: true
 
   datasource:
-    url: jdbc:mysql://localhost:3306/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
-    username: daniilkharchev
+    url: jdbc:postgresql://localhost:5432/search_engine
+    username: postgres
     password: 12345678
+    driver-class-name: org.postgresql.Driver
 
 indexing-settings:
   sites:

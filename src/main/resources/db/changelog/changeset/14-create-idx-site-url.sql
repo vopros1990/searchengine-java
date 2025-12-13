@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX idx_site_url ON site(url);

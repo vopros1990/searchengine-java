@@ -6,7 +6,7 @@ import lombok.Setter;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "`index`")
+@Table(name = "index")
 @Getter
 @Setter
 public class Index {
@@ -24,6 +24,6 @@ public class Index {
     @JoinColumn(name = "lemma_id")
     private Lemma lemma;
 
-    @Column(name = "`rank`")
+    @Column(name = "rank")
     private Float rank;
 }

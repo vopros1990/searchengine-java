@@ -14,7 +14,7 @@ import java.util.List;
 public interface LemmaCacheRepository extends JpaRepository<LemmaCache, Integer> {
     @Modifying
     @Transactional
-    @Query(value = "INSERT INTO lemma_cache (word, lemma) VALUES (:word, :lemma) ON DUPLICATE KEY UPDATE word=:word;",
+    @Query(value = "INSERT INTO lemma_cache (word, lemma) VALUES (:word, :lemma) ON CONFLICT (word) DO NOTHING;",
             nativeQuery = true)
     void save(String word, String lemma);
 

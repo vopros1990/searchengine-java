@@ -14,7 +14,10 @@ import java.util.List;
 
 @Repository
 public interface SiteRepository extends JpaRepository<Site, Integer> {
-    List<Site> findByStatus(IndexingStatus status);
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM site where id=:id", nativeQuery = true)
+    void deleteById(int id);
 
     boolean existsByStatus(IndexingStatus status);
 
@@ -24,16 +27,6 @@ public interface SiteRepository extends JpaRepository<Site, Integer> {
 
     @Modifying
     @Transactional
-    @Query(value = "UPDATE site SET status_time = now() WHERE id = :siteId;", nativeQuery = true)
+    @Query(value = "UPDATE site SET status_time = CURRENT_TIMESTAMP WHERE id = :siteId;", nativeQuery = true)
     void updateStatusTime(@Param("siteId") int id);
-
-    @Modifying
-    @Transactional
-    @Query(value = "UPDATE site SET status_time = now(), last_error = :lastError WHERE id = :siteId;", nativeQuery = true)
-    void updateLastErrorAndStatusTime(@Param("siteId") int id, @Param("lastError") String lastError);
-
-    @Modifying
-    @Transactional
-    @Query(value = "UPDATE site SET status_time = now(), status = :status WHERE id = :siteId;", nativeQuery = true)
-    void updateStatusAndStatusTime(@Param("siteId") int id, @Param("status") String status);
 }

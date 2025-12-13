@@ -1,5 +1,6 @@
 package searchengine.repositories;
 
+import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -22,8 +23,8 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
             		GROUP BY site_id
             	),
             	matched_pages AS (
-            		SELECT i.page_id AS page_id, SUM(i.rank * LOG(tp.count / l.frequency)) AS `rank`
-            		FROM `index` i
+            		SELECT i.page_id AS page_id, SUM(i.rank * LOG(tp.count / l.frequency)) AS rank
+            		FROM index i
             		LEFT JOIN lemma l ON l.id=i.lemma_id
             		LEFT JOIN total_pages tp ON l.site_id=tp.site_id
             		WHERE l.lemma IN :searchTerms
@@ -36,7 +37,7 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
             		FROM page p
             	),
             	max_rank AS (
-            		SELECT `rank` FROM matched_pages ORDER BY `rank` DESC LIMIT 1
+            		SELECT rank FROM matched_pages ORDER BY rank DESC LIMIT 1
             	)
             SELECT
             	s.url as site,
@@ -64,8 +65,8 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
             		GROUP BY site_id
             	),
             	matched_pages AS (
-            		SELECT i.page_id AS page_id, SUM(i.rank * LOG(tp.count / l.frequency)) AS `rank`
-            		FROM `index` i
+            		SELECT i.page_id AS page_id, SUM(i.rank * LOG(tp.count / l.frequency)) AS rank
+            		FROM index i
             		LEFT JOIN lemma l ON l.id=i.lemma_id
             		LEFT JOIN total_pages tp ON l.site_id=tp.site_id
             		WHERE l.lemma IN :searchTerms AND l.site_id=tp.site_id
@@ -78,7 +79,7 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
             		FROM page p
             	),
             	max_rank AS (
-            		SELECT `rank` FROM matched_pages ORDER BY `rank` DESC LIMIT 1
+            		SELECT rank FROM matched_pages ORDER BY rank DESC LIMIT 1
             	)
             SELECT
             	s.url as site,
@@ -105,7 +106,7 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
             	),
             	matched_pages AS (
             		SELECT i.page_id AS page_id
-            		FROM `index` i
+            		FROM index i
             		LEFT JOIN lemma l ON l.id=i.lemma_id
             		LEFT JOIN total_pages tp ON l.site_id=tp.site_id
             		WHERE l.lemma IN :searchTerms
@@ -127,7 +128,7 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
             	),
             	matched_pages AS (
             		SELECT i.page_id AS page_id
-            		FROM `index` i
+            		FROM index i
             		LEFT JOIN lemma l ON l.id=i.lemma_id
             		LEFT JOIN total_pages tp ON l.site_id=tp.site_id
             		WHERE l.lemma IN :searchTerms AND l.site_id=tp.site_id
@@ -141,10 +142,8 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
     @Query(value = "select count(id) from page where site_id=?;", nativeQuery = true)
     int countSitePages(int siteId);
 
-    @Query(value = "select id from page where site_id=?;", nativeQuery = true)
-    List<Integer> getSitePagesIds(int siteId);
-
     @Modifying
+    @Transactional
     @Query(value = "delete from page where site_id=?;", nativeQuery = true)
     void deleteBySiteId(int siteId);
 

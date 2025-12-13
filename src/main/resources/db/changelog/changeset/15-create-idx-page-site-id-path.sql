@@ -1,0 +1,1 @@
+CREATE INDEX idx_page_site_id_path ON page(site_id, path);

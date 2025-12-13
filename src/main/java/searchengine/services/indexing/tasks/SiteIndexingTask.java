@@ -16,6 +16,7 @@ import searchengine.services.indexing.service.impl.LemmaExtractorServiceImpl;
 import searchengine.common.text.URLUtils;
 import searchengine.services.mapper.LemmaIndexMapper;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinTask;
@@ -44,7 +45,6 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
     private static final int MAX_PAGES_PER_TASK = 10;
     private static final int SAVE_RETRY_MAX_ATTEMPTS = 5;
     private static final int SAVE_RETRY_DELAY_MILLIS = 50;
-
 
     protected SiteIndexingTask(Site site,
                                SiteRepository siteRepository,
@@ -107,7 +107,7 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
             return IndexingStatus.FAILED;
 
         processPaths();
-        return IndexingStatus.INDEXED;
+        return isIndexingStopped.get() ? IndexingStatus.FAILED : IndexingStatus.INDEXED;
     }
 
     public void cancelAll() {
@@ -125,22 +125,18 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
             visitedPaths.add(entryPointPath);
 
             if (page.getCode() != 200) {
-                siteRepository.updateLastErrorAndStatusTime(
-                        site.getId(),
-                        "Ошибка индексации: главная страница сайта не доступна. Код ответа: " + page.getCode()
-                );
-
+                updateSiteError("Ошибка индексации: главная страница сайта не доступна. Код ответа: " + page.getCode());
                 return false;
             }
 
             extractFilteredRelativePaths(page.getContent(), pathsToProcess);
             processPageLemmas(page);
             savePageWithRetry(page);
-            siteRepository.updateStatusTime(site.getId());
+            updateTimestamp();
 
             return true;
         } catch (IndexingServiceException e) {
-            siteRepository.updateLastErrorAndStatusTime(site.getId(), e.getMessage());
+            updateSiteError(e.getMessage());
             return false;
         }
     }
@@ -175,7 +171,8 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
             try {
                 Page page = pageFetcher.fetchPage(baseUrl + path);
                 page.setSite(site);
-                page.setPath(page.getPath().replaceAll("^" + entryPointPath, "/"));
+                String pagePath = entryPointPath.equals("/") ? page.getPath() : page.getPath().replaceAll("^" + entryPointPath, "");
+                page.setPath(pagePath);
 
                 List<String> extractedPaths = new ArrayList<>();
                 if(!extractFilteredRelativePaths(page.getContent(), extractedPaths))
@@ -187,10 +184,10 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
 
                 processPageLemmas(page);
                 savePageWithRetry(page);
-                siteRepository.updateStatusTime(site.getId());
+                updateTimestamp();
             } catch (IndexingServiceException e) {
                 if (isIndexingStopped.get()) this.complete(IndexingStatus.FAILED);
-                siteRepository.updateLastErrorAndStatusTime(site.getId(), e.getMessage());
+                updateSiteError(e.getMessage());
             }
         });
 
@@ -235,5 +232,15 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
                 TaskSleepBlocker.safeSleep(SAVE_RETRY_DELAY_MILLIS);
             }
         }
+    }
+    
+    private void updateSiteError(String error) {
+        site.setLastError(error);
+        site.setStatusTime(Instant.now());
+        siteRepository.save(site);
+    }
+
+    private void updateTimestamp() {
+        siteRepository.updateStatusTime(site.getId());
     }
 }

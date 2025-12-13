@@ -1,27 +1,35 @@
 databaseChangeLog:
   - include:
-      file: db/changelog/changeset/create-site-table.sql
+      file: db/changelog/changeset/1-create-site-table.sql
   - include:
-      file: db/changelog/changeset/create-page-table.sql
+      file: db/changelog/changeset/2-create-page-table.sql
   - include:
-      file: db/changelog/changeset/create-idx-path-in-page-table.sql
+      file: db/changelog/changeset/3-create-lemma-table.sql
   - include:
-      file: db/changelog/changeset/create-lemma-table.sql
+      file: db/changelog/changeset/4-create-lemma-cache-table.sql
   - include:
-      file: db/changelog/changeset/create-index-table.sql
+      file: db/changelog/changeset/5-create-index-table.sql
   - include:
-      file: db/changelog/changeset/add-unique-constraint-in-page-table.sql
+      file: db/changelog/changeset/6-add-unique-constraint-in-site-table.sql
   - include:
-      file: db/changelog/changeset/create-idx-url-in-site-table.sql
+      file: db/changelog/changeset/7-add-unique-constraint-in-page-table.sql
   - include:
-      file: db/changelog/changeset/add-unique-constraint-in-site-table.sql
+      file: db/changelog/changeset/8-add-unique-constraint-in-lemma-table.sql
   - include:
-      file: db/changelog/changeset/add-unique-constraint-in-lemma-table.sql
+      file: db/changelog/changeset/9-add-unique-constraint-in-lemma-cache-table.sql
   - include:
-      file: db/changelog/changeset/create-idx-lemma-in-lemma-table.sql
+      file: db/changelog/changeset/10-create-idx-page-site-id.sql
   - include:
-      file: db/changelog/changeset/create-lemma-cache-table.sql
+      file: db/changelog/changeset/11-create-idx-lemma-site-id.sql
   - include:
-      file: db/changelog/changeset/add-unique-constraint-in-lemma-cache-table.sql
+      file: db/changelog/changeset/12-create-idx-index-page-id.sql
   - include:
-      file: db/changelog/changeset/create-idx-word-in-lemma-cache-table.sql
+      file: db/changelog/changeset/13-create-idx-index-lemma-id.sql
+  - include:
+      file: db/changelog/changeset/14-create-idx-site-url.sql
+  - include:
+      file: db/changelog/changeset/15-create-idx-page-site-id-path.sql
+  - include:
+      file: db/changelog/changeset/16-create-idx-lemma-lemma.sql
+  - include:
+      file: db/changelog/changeset/17-create-idx-lemma-cache-word.sql

@@ -14,6 +14,7 @@ import searchengine.services.indexing.service.impl.LemmaExtractorServiceImpl;
 import searchengine.common.text.URLUtils;
 import searchengine.services.mapper.LemmaIndexMapper;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.RecursiveTask;
 
@@ -52,18 +53,10 @@ public class SinglePageIndexingTask extends RecursiveTask<IndexingStatus> {
     public IndexingStatus compute() {
         if (URLUtils.isNonHttpLink(url)) return IndexingStatus.FAILED;
 
-        Page existingPage = pageRepository.findBySiteIdAndPathContaining(
-                site.getId(),
-                URLUtils.toRelativePath(url)
-        );
-
-        if (existingPage != null)
-            pageRepository.delete(existingPage);
-
         try {
             processIndexPage();
         } catch (IndexingServiceException e) {
-            siteRepository.updateLastErrorAndStatusTime(site.getId(), e.getMessage());
+            updateSiteError(e.getMessage());
             return IndexingStatus.FAILED;
         }
 
@@ -73,7 +66,8 @@ public class SinglePageIndexingTask extends RecursiveTask<IndexingStatus> {
     private void processIndexPage() throws IndexingServiceException {
         Page page = pageFetcher.fetchPage(url);
 
-        page.setPath(page.getPath().replaceAll("^" + entryPointPath, "/"));
+        String pagePath = entryPointPath.equals("/") ? page.getPath() : page.getPath().replaceAll("^" + entryPointPath, "");
+        page.setPath(pagePath);
 
         page.setSite(site);
 
@@ -87,7 +81,7 @@ public class SinglePageIndexingTask extends RecursiveTask<IndexingStatus> {
         LemmaIndexMapper.mapToEntities(page, site, lemmasFrequencyMap);
 
         savePageWithRetry(page);
-        siteRepository.updateStatusTime(site.getId());
+        updateTimestamp();
     }
 
     @Transactional
@@ -101,5 +95,15 @@ public class SinglePageIndexingTask extends RecursiveTask<IndexingStatus> {
                 TaskSleepBlocker.safeSleep(SAVE_RETRY_DELAY_MILLIS);
             }
         }
+    }
+
+    private void updateSiteError(String error) {
+        site.setLastError(error);
+        site.setStatusTime(Instant.now());
+        siteRepository.save(site);
+    }
+
+    private void updateTimestamp() {
+        siteRepository.updateStatusTime(site.getId());
     }
 }

@@ -1,0 +1,1 @@
+CREATE INDEX idx_index_site_id ON index(page_id);

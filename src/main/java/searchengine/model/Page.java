@@ -19,7 +19,7 @@ import java.util.Objects;
 )
 @Getter
 @Setter
-@SQLInsert(sql = "INSERT INTO page (code,content,path,site_id) values (?, ?, ?, ?) ON DUPLICATE KEY UPDATE code=code")
+@SQLInsert(sql = "INSERT INTO page (code,content,path,site_id) values (?, ?, ?, ?) ON CONFLICT (site_id, path) DO NOTHING")
 public class Page implements Comparable<Page> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,7 +32,7 @@ public class Page implements Comparable<Page> {
     @Column(name="code")
     private Integer code;
 
-    @Column(name="content", columnDefinition = "MEDIUMTEXT")
+    @Column(name="content", columnDefinition = "TEXT")
     private String content;
 
     @ManyToOne

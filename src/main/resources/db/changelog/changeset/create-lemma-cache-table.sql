@@ -1,5 +1,0 @@
-CREATE TABLE `lemma_cache`
-(`id` INT NOT NULL AUTO_INCREMENT,
-`word` VARCHAR(60) NOT NULL,
-`lemma` VARCHAR(60) NOT NULL,
-PRIMARY KEY(id));

@@ -16,6 +16,7 @@ import searchengine.services.indexing.tasks.SiteIndexingTask;
 import searchengine.common.task.TaskExecutor;
 import searchengine.common.text.URLUtils;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -47,8 +48,8 @@ public class IndexingServiceImpl implements IndexingService {
                 indexingSites.forEach(siteConfig -> {
                     Site existingSiteInDatabase = siteRepository.findFirstByUrlContaining(siteConfig.getUrl());
 
-                    if(existingSiteInDatabase != null)
-                        databaseCleanupService.clearIndexingData(existingSiteInDatabase);
+                    if (existingSiteInDatabase != null)
+                        databaseCleanupService.clearSiteIndexingData(existingSiteInDatabase);
 
                     siteConfig.setStatus(IndexingStatus.INDEXING);
                     siteConfig.setId(null);
@@ -75,14 +76,6 @@ public class IndexingServiceImpl implements IndexingService {
 
         taskExecutor.runAsync(() -> {
             processIndexingCancellation();
-
-            siteRepository.findByStatus(IndexingStatus.INDEXING).forEach(
-                    site -> {
-                        site.setStatus(IndexingStatus.FAILED);
-                        site.setLastError("Индексация отменена пользователем");
-                        siteRepository.save(site);
-                    });
-
             isIndexingStopping = false;
         });
     }
@@ -92,6 +85,7 @@ public class IndexingServiceImpl implements IndexingService {
         String baseUrl = URLUtils.extractBaseUrl(url);
 
         if (baseUrl.isEmpty()) throw new IndexingException("Некорректный URL");
+        if (isIndexingStarted || isIndexingStopping) throw new IndexingException("Невозможно проиндексировать страницу - ");
 
         Site indexingSite = siteRepository.findFirstByUrlContaining(baseUrl);
 
@@ -109,6 +103,8 @@ public class IndexingServiceImpl implements IndexingService {
             indexingSite = siteRepository.save(indexingSite);
         }
 
+        databaseCleanupService.clearPageIndexingData(indexingSite, url);
+
         SinglePageIndexingTask task = indexingTaskFactory.buildSinglePageIndexingTask(indexingSite, url);
 
         taskExecutor.submitAsync(task,
@@ -124,7 +120,13 @@ public class IndexingServiceImpl implements IndexingService {
         taskExecutor.submitAsync(
                 task,
                 (status) -> {
-                    siteRepository.updateStatusAndStatusTime(indexingSite.getId(), status.toString());
+                    if (task.isIndexingStopped.get())
+                        indexingSite.setLastError("Индексация отменена пользователем");
+
+                    indexingSite.setStatus(status);
+                    indexingSite.setStatusTime(Instant.now());
+                    siteRepository.save(indexingSite);
+
                     if (--currentIndexingSitesCount == 0)
                         taskExecutor.shutdown();
                 },

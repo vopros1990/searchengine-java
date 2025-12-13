@@ -1,7 +1,10 @@
 package searchengine.services.data;
 
+import jakarta.transaction.Transactional;
+import searchengine.model.Page;
 import searchengine.model.Site;
 
 public interface DatabaseCleanupService {
-    void clearIndexingData(Site site);
+    void clearSiteIndexingData(Site site);
+    void clearPageIndexingData(Site site, String pageUrl);
 }

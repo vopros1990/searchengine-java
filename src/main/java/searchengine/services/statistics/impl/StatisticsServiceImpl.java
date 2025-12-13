@@ -14,8 +14,7 @@ import searchengine.repositories.PageRepository;
 import searchengine.repositories.SiteRepository;
 import searchengine.services.statistics.StatisticsService;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,7 +57,7 @@ public class StatisticsServiceImpl implements StatisticsService {
                 lastError = indexingSite.getLastError() == null ? "" : indexingSite.getLastError();
             } else {
                 indexingSite.setStatus(IndexingStatus.FAILED);
-                indexingSite.setStatusTime(LocalDateTime.now());
+                indexingSite.setStatusTime(Instant.now());
                 lastError = "Индексация сайта не запущена";
             }
 
@@ -66,7 +65,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             item.setLemmas(lemmas);
             item.setStatus(indexingSite.getStatus().toString());
             item.setError(lastError);
-            item.setStatusTime(indexingSite.getStatusTime().toEpochSecond(ZoneOffset.UTC));
+            item.setStatusTime(indexingSite.getStatusTime().toEpochMilli());
             total.setPages(total.getPages() + pages);
             detailed.add(item);
         });

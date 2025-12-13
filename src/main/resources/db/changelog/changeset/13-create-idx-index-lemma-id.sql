@@ -1,0 +1,1 @@
+CREATE INDEX idx_index_lemma_id ON index(lemma_id);

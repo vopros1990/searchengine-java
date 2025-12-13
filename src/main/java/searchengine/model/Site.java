@@ -4,7 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
@@ -23,11 +24,11 @@ public class Site {
     private Integer id;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "enum('INDEXING', 'INDEXED', 'FAILED')", name = "status")
+    @Column(columnDefinition = "VARCHAR(16)", name = "status")
     private IndexingStatus status;
 
     @Column(name="status_time")
-    private LocalDateTime statusTime;
+    private Instant statusTime;
 
     @Column(name="last_error", columnDefinition = "TEXT")
     private String lastError;

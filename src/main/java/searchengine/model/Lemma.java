@@ -18,7 +18,7 @@ import java.util.Objects;
         }))
 @Getter
 @Setter
-@SQLInsert(sql = "INSERT INTO lemma (frequency, lemma, site_id) values (?, ?, ?) ON DUPLICATE KEY UPDATE frequency=frequency+1")
+@SQLInsert(sql = "INSERT INTO lemma (frequency, lemma, site_id) values (?, ?, ?) ON CONFLICT (lemma, site_id) DO UPDATE SET frequency = lemma.frequency + 1")
 public class Lemma implements Comparable<Lemma> {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

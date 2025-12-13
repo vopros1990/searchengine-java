@@ -4,6 +4,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class URLUtils {
+    public static String addTrailingSlashIfNotExists(String url) {
+        return !url.endsWith("/") ? url + "/" : url;
+    }
+
+    public static String addLeadingSlashIfNotExists(String url) {
+        return !url.startsWith("/") ? "/" + url : url;
+    }
+
     public static String removeTrailingSlash(String url) {
         return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
@@ -31,7 +39,7 @@ public class URLUtils {
     public static String toRelativePath(String url, String baseUrl) {
         String regex = "https?://|" + stripUrl(baseUrl);
         url = url.replaceAll(regex, "");
-        return url;
+        return addLeadingSlashIfNotExists(url);
     }
 
     public static String toRelativePath(String url) {

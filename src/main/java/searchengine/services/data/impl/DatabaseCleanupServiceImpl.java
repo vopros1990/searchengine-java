@@ -3,6 +3,8 @@ package searchengine.services.data.impl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import searchengine.common.text.URLUtils;
+import searchengine.model.Page;
 import searchengine.model.Site;
 import searchengine.repositories.IndexRepository;
 import searchengine.repositories.LemmaRepository;
@@ -21,13 +23,27 @@ public class DatabaseCleanupServiceImpl implements DatabaseCleanupService {
     private final LemmaRepository lemmaRepository;
 
     @Override
-    @Transactional
-    public void clearIndexingData(Site site) {
+    public void clearSiteIndexingData(Site site) {
         int siteId = site.getId();
-        List<Integer> pageIds = pageRepository.getSitePagesIds(siteId);
-        pageIds.forEach(indexRepository::deleteByPageId);
+        indexRepository.deleteBySiteId(siteId);
         lemmaRepository.deleteBySiteId(siteId);
         pageRepository.deleteBySiteId(siteId);
         siteRepository.deleteById(siteId);
     }
+
+    @Override
+    public void clearPageIndexingData(Site site, String pageUrl) {
+        Page existingPage = pageRepository.findBySiteIdAndPathContaining(
+                site.getId(),
+                URLUtils.toRelativePath(pageUrl)
+        );
+
+        if (existingPage != null) {
+            int id = existingPage.getId();
+            indexRepository.deleteByPageId(id);
+            lemmaRepository.deleteByPageId(id);
+            pageRepository.deleteById(id);
+        }
+    }
+
 }

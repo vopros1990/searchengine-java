@@ -1,0 +1,1 @@
+CREATE INDEX idx_lemma_site_id ON lemma(site_id);

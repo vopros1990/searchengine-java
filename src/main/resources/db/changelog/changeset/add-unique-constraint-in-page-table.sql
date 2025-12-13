@@ -1,1 +1,0 @@
-ALTER TABLE page ADD UNIQUE (path(190), site_id);

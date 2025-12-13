@@ -9,7 +9,9 @@ import org.springframework.context.annotation.Scope;
 import searchengine.common.text.URLUtils;
 import searchengine.model.Site;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Getter
@@ -29,7 +31,7 @@ public class SitesList {
                     Site site = new Site();
                     site.setUrl(URLUtils.removeTrailingSlash(siteConfig.getUrl()));
                     site.setName(siteConfig.getName());
-                    site.setStatusTime(LocalDateTime.now());
+                    site.setStatusTime(Instant.now());
                     return site;
                 }).toList();
     }

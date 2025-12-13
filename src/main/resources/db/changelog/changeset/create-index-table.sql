@@ -1,8 +1,0 @@
-CREATE TABLE `index`
-(`id` INT NOT NULL AUTO_INCREMENT,
-`page_id` INT NOT NULL,
-`lemma_id` INT NOT NULL,
-`rank` FLOAT NOT NULL,
-PRIMARY KEY(id),
-FOREIGN KEY (page_id) REFERENCES page(id) ON DELETE CASCADE,
-FOREIGN KEY (lemma_id) REFERENCES lemma(id));
