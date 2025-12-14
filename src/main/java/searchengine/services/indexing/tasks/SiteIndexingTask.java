@@ -186,8 +186,8 @@ public class SiteIndexingTask extends RecursiveTask<IndexingStatus> {
                 savePageWithRetry(page);
                 updateTimestamp();
             } catch (IndexingServiceException e) {
-                if (isIndexingStopped.get()) this.complete(IndexingStatus.FAILED);
                 updateSiteError(e.getMessage());
+                if (isIndexingStopped.get()) this.complete(IndexingStatus.FAILED);
             }
         });
 

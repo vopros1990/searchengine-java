@@ -130,8 +130,12 @@ public class IndexingServiceImpl implements IndexingService {
                     if (--currentIndexingSitesCount == 0)
                         taskExecutor.shutdown();
                 },
-                (exception) -> log.debug(Arrays.toString(exception.getStackTrace())));
-
+                (exception) -> {
+                    indexingSite.setStatus(IndexingStatus.FAILED);
+                    indexingSite.setStatusTime(Instant.now());
+                    siteRepository.save(indexingSite);
+                    log.debug(Arrays.toString(exception.getStackTrace()));
+                });
     }
 
     private void processIndexingCancellation() {
