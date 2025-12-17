@@ -9,7 +9,7 @@ import searchengine.model.Lemma;
 
 @Repository
 public interface LemmaRepository extends JpaRepository<Lemma, Integer> {
-    @Query(value = "SELECT COUNT(DISTINCT(lemma)) FROM lemma;", nativeQuery = true)
+@Query(value = "SELECT COUNT(DISTINCT(lemma)) FROM lemma;", nativeQuery = true)
     int countUniqueLemmas();
 
     @Query(value = "SELECT COUNT(1) FROM lemma WHERE site_id=?;", nativeQuery = true)
