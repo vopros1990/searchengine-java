@@ -127,13 +127,21 @@ public class IndexingServiceImpl implements IndexingService {
                     indexingSite.setStatusTime(Instant.now());
                     siteRepository.save(indexingSite);
 
-                    if (--currentIndexingSitesCount == 0)
+                    if (--currentIndexingSitesCount == 0) {
+                        isIndexingStarted = false;
                         taskExecutor.shutdown();
+                    }
                 },
                 (exception) -> {
                     indexingSite.setStatus(IndexingStatus.FAILED);
                     indexingSite.setStatusTime(Instant.now());
                     siteRepository.save(indexingSite);
+
+                    if (--currentIndexingSitesCount == 0) {
+                        isIndexingStarted = false;
+                        taskExecutor.shutdown();
+                    }
+
                     log.debug(Arrays.toString(exception.getStackTrace()));
                 });
     }

@@ -21,6 +21,8 @@ public interface LemmaCacheRepository extends JpaRepository<LemmaCache, Integer>
     @Query(value = "SELECT lemma FROM LemmaCache WHERE word=:word")
     String findLemmaByWord(String word);
 
+    boolean existsByLemma(String lemma);
+
     @Query(value = "SELECT word, lemma from lemma_cache LIMIT :limit OFFSET :offset;", nativeQuery = true)
     List<LemmaCacheDto> getWordLemmaMap(Integer limit, Integer offset);
 }

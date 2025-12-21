@@ -23,7 +23,7 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
             		GROUP BY site_id
             	),
             	matched_pages AS (
-            		SELECT i.page_id AS page_id, SUM(i.rank * LOG(tp.count / l.frequency)) AS rank
+            		SELECT i.page_id AS page_id, SUM(i.rank * LOG(tp.count * 1.0 / l.frequency)) AS rank
             		FROM index i
             		LEFT JOIN lemma l ON l.id=i.lemma_id
             		LEFT JOIN total_pages tp ON l.site_id=tp.site_id
@@ -65,7 +65,7 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
             		GROUP BY site_id
             	),
             	matched_pages AS (
-            		SELECT i.page_id AS page_id, SUM(i.rank * LOG(tp.count / l.frequency)) AS rank
+            		SELECT i.page_id AS page_id, SUM(i.rank * LOG(tp.count * 1.0 / l.frequency)) AS rank
             		FROM index i
             		LEFT JOIN lemma l ON l.id=i.lemma_id
             		LEFT JOIN total_pages tp ON l.site_id=tp.site_id
@@ -146,6 +146,4 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
     @Transactional
     @Query(value = "delete from page where site_id=?;", nativeQuery = true)
     void deleteBySiteId(int siteId);
-
-
 }

@@ -66,3 +66,6 @@ crawler-settings:
 
 task-executor:
   shutdown-await-termination-seconds: 15
+
+searching:
+  mode: jpql # sql / jpql - default

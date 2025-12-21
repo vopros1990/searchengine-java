@@ -33,3 +33,5 @@ databaseChangeLog:
       file: db/changelog/changeset/16-create-idx-lemma-lemma.sql
   - include:
       file: db/changelog/changeset/17-create-idx-lemma-cache-word.sql
+  - include:
+      file: db/changelog/changeset/18-create-idx-lemma-cache-lemma.sql

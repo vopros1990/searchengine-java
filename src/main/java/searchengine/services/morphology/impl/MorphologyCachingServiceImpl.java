@@ -32,7 +32,7 @@ public class MorphologyCachingServiceImpl implements MorphologyCachingService {
         String result;
         if ((result = cache.get(word)) != null) return result;
 
-        return repository.findLemmaByWord(word);
+        return repository.existsByLemma(word) ? word : repository.findLemmaByWord(word);
     }
 
     @Override

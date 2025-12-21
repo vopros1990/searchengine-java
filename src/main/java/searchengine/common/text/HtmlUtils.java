@@ -8,9 +8,20 @@ public class HtmlUtils {
             "<style>[\\s\\S]*?</style>|<(no)?script[^>]*>[\\s\\S]*?</(no)?script>|<!--.*?-->|<!--[\\S\\s]+?-->|<!--[\\S\\s]*?$|</?[^>]+>";
 
     public static String stripHtmlTags(String content) {
-        String text = content.replaceAll(HTML_TAGS_AND_COMMENTS_REGEX, "");
-        text = text.replaceAll("\\s+|&nbsp;", " ");
-        return text;
+
+        if (content == null || content.isBlank()) {
+            return "";
+        }
+
+        String text = content
+                .replace("\u00AD", "")
+                .replaceAll("[\\p{Cf}]", "")
+                .replace('\u00A0', ' ');
+
+        text = text.replaceAll(HTML_TAGS_AND_COMMENTS_REGEX, " ");
+        text = text.replaceAll("\\s+", " ");
+
+        return text.trim();
     }
 
     public static String getTagContent(String tag, String htmlContent) {

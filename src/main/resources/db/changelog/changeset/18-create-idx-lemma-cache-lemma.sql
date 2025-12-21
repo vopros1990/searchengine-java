@@ -1,0 +1,1 @@
+CREATE INDEX idx_lemma_cache_lemma ON lemma_cache(lemma);
