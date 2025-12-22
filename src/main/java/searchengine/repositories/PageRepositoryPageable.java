@@ -39,5 +39,5 @@ public interface PageRepositoryPageable extends PagingAndSortingRepository<searc
             HAVING count(i.lemma.lemma) = :lemmasCount
             ORDER BY SUM(i.rank * LOG( (SELECT COUNT(p) FROM Page p) * 1.0 / i.lemma.frequency) ) DESC
            """)
-    Page<SearchResultDto> searchPagesByLemmasOrderByRelevance(List<String> lemmas, int lemmasCount, Pageable paging, Site site);
+    Page<SearchResultDto> searchPagesByLemmasOrderByRelevance(List<String> lemmas, int lemmasCount, Site site, Pageable paging);
 }

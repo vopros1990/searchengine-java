@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import searchengine.dto.search.SearchResultDto;
 import searchengine.model.Page;
+import searchengine.model.Site;
 
 import java.util.List;
 
@@ -138,6 +139,29 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
             	) SELECT COUNT(1) FROM matched_pages mp;
             """, nativeQuery = true)
     int searchPagesTotalCount(List<String> searchTerms, Integer searchTermsSize, String siteUrl);
+
+
+    @Query("""
+            SELECT SUM(i.rank * LOG( (SELECT COUNT(p) FROM Page p) * 1.0 / i.lemma.frequency) ) as relevance
+            FROM Index i
+            WHERE i.lemma.lemma IN :lemmas
+            GROUP BY i.page, i.page.site
+            HAVING count(i.lemma.lemma) = :lemmasCount
+            ORDER BY SUM(i.rank * LOG( (SELECT COUNT(p) FROM Page p) * 1.0 / i.lemma.frequency) ) DESC
+            LIMIT 1
+           """)
+    double getMaxRelevance(List<String> lemmas, int lemmasCount);
+
+    @Query("""
+            SELECT SUM(i.rank * LOG( (SELECT COUNT(p) FROM Page p) * 1.0 / i.lemma.frequency) ) as relevance
+            FROM Index i
+            WHERE i.lemma.lemma IN :lemmas AND i.lemma.site = :site
+            GROUP BY i.page, i.page.site
+            HAVING count(i.lemma.lemma) = :lemmasCount
+            ORDER BY SUM(i.rank * LOG( (SELECT COUNT(p) FROM Page p) * 1.0 / i.lemma.frequency) ) DESC
+            LIMIT 1
+           """)
+    double getMaxRelevance(List<String> lemmas, int lemmasCount, Site site);
 
     @Query(value = "select count(id) from page where site_id=?;", nativeQuery = true)
     int countSitePages(int siteId);
